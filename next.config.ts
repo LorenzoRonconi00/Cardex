@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  images: {
+    domains: ['images.pokemontcg.io'],
+    formats: ['image/avif', 'image/webp'],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/expansion/sv1',
+        permanent: false,
+      },
+    ]
+  }
 };
 
 export default nextConfig;
