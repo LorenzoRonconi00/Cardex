@@ -2,6 +2,8 @@ import React from 'react';
 import { Providers } from './providers';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { getServerSession } from 'next-auth';
+import { authOptions } from './api/auth/[...nextauth]/route';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -10,15 +12,17 @@ export const metadata = {
   description: 'Track your Pokémon Trading Card Game Alt Art collection with Cardex',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+  
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );

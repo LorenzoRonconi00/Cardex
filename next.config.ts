@@ -3,7 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['images.pokemontcg.io'],
+    domains: [
+      'images.pokemontcg.io',
+      'lh3.googleusercontent.com'
+    ],
     formats: ['image/avif', 'image/webp'],
   },
   async redirects() {

@@ -3,12 +3,16 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import TopHeader from './TopHeader';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -17,18 +21,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setIsClient(true);
   }, []);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isClient && status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [isClient, status, router]);
+
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Initial loading state before client-side rendering
-  if (!isClient) {
+  // Initial loading state before client-side rendering or during authentication check
+  if (!isClient || status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-[#1E2124]">
         <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
       </div>
     );
+  }
+
+  // If not authenticated, don't render the layout (will be redirected by useEffect)
+  if (status === 'unauthenticated') {
+    return null;
   }
 
   return (
@@ -76,7 +92,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </svg>
             </button>
           </div>
-          <TopHeader />
+          <TopHeader session={session} />
         </div>
         
         {/* Page content with responsive padding */}

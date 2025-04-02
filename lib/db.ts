@@ -118,9 +118,38 @@ const wishlistItemSchema = new mongoose.Schema({
   }
 });
 
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: {
+    type: String,
+    unique: true,
+  },
+  emailVerified: Date,
+  image: String,
+  accounts: [
+    {
+      provider: String,
+      providerAccountId: String,
+      type: String,
+      access_token: String,
+      expires_at: Number,
+      token_type: String,
+      id_token: String,
+      scope: String,
+    }
+  ],
+  sessions: [
+    {
+      expires: Date,
+      sessionToken: String,
+    }
+  ],
+});
+
 // Controlla se il modello esiste già prima di crearlo (evita errori in hot-reload)
 export const Card = mongoose.models.Card || mongoose.model('Card', cardSchema);
 export const Expansion = mongoose.models.Expansion || mongoose.model('Expansion', expansionSchema);
 export const WishlistItem = mongoose.models.WishlistItem || mongoose.model('WishlistItem', wishlistItemSchema);
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default connectToDatabase;

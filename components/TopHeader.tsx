@@ -1,67 +1,111 @@
 'use client';
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import Image from 'next/image';
+import { Session } from 'next-auth';
 
-const TopHeader: React.FC = () => {
-  // Fetch card stats (total and collected)
-  const { data: cardStats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['cardStats'],
-    queryFn: async () => {
-      const response = await fetch('/api/cards/stats');
-      if (!response.ok) {
-        throw new Error('Failed to fetch card stats');
+interface TopHeaderProps {
+  session: Session | null;
+}
+
+const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Chiudi il menu utente quando si clicca fuori
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
       }
-      return await response.json();
-    },
-    refetchInterval: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
-  });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/auth/signin' });
+  };
 
   return (
-    <header className="h-16 sm:h-18 bg-[#1E2124] flex items-center justify-between px-4 sm:px-8 shadow-md">
-      <div className="flex items-center space-x-4 sm:space-x-12">
-        {/* CARDEX logo - con padding a sinistra su mobile per fare spazio all'icona menu */}
-        <h1 className="text-white text-xl sm:text-2xl font-extrabold tracking-widest pl-8 md:pl-0">CARDEX</h1>
+    <div className="bg-[#2C2F33] text-white py-4 px-4 md:px-6 flex justify-between items-center">
+      <div className="flex-1 text-center md:text-left">
+        <h1 className="text-xl font-bold">CARDEX</h1>
+      </div>
 
-        {/* Card counter stats - hidden on mobile */}
-        {isLoadingStats ? (
-          <div className="hidden sm:block bg-[#36393E] text-white rounded-lg px-5 py-1 animate-pulse shadow-2xl">
-            Caricamento...
-          </div>
-        ) : cardStats ? (
-          <div className="hidden sm:flex bg-[#36393E] text-white rounded-2xl px-5 py-1 items-center space-x-1 shadow-2xl">
-            <div className='flex flex-col items-start justify-start'>
-              <div>
-                <span className="font-bold text-sm">{cardStats.collectedCount}</span>
-                <span className="opacity-70 text-sm"> / </span>
-                <span className='text-sm font-bold'>{cardStats.totalCount}</span>
+      {/* User profile section */}
+      {session?.user && (
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="flex items-center space-x-2 focus:outline-none"
+          >
+            {session.user.image ? (
+              <div className="w-8 h-8 rounded-full overflow-hidden relative">
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "Utente"}
+                  width={32}
+                  height={32}
+                  className="object-cover"
+                  // Fallback in caso di errore di caricamento dell'immagine
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = '/default-avatar.png'; // Assicurati di avere un'immagine di fallback
+                  }}
+                />
               </div>
-              <span className="text-xs opacity-70">Illustration Rare</span>
-            </div>
-            
-            <div className="ml-2 text-yellow-300">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
-            </div>
-          </div>
-        ) : null}
-      </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                <span className="text-sm font-medium">
+                  {session.user.name?.charAt(0) || "U"}
+                </span>
+              </div>
+            )}
+            <span className="hidden md:inline text-sm truncate max-w-[150px]">
+              {session.user.name}
+            </span>
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </button>
 
-      {/* User profile */}
-      <div className="flex items-center space-x-2">
-        <span className="text-white text-sm sm:text-md">Frank</span>
-        <Image
-          src="/images/profile.svg"
-          alt="Profile"
-          width={36}
-          height={36}
-          className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
-        />
-      </div>
-    </header>
+          {/* Dropdown menu */}
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-[#36393F] rounded-md shadow-lg z-50 py-1">
+              <div className="px-4 py-3 border-b border-gray-700">
+                <p className="text-sm font-medium">{session.user.name}</p>
+                <p className="text-xs text-gray-400 truncate">{session.user.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#4E5D94] transition-colors"
+              >
+                Disconnetti
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
