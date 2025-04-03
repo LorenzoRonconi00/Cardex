@@ -25,7 +25,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onSearch }) => {
   const isSearchActive = searchTerm.trim() !== '';
 
   return (
-    <div className="relative w-full max-w-xs">
+    <div className="relative w-full">
       <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
         <svg 
           className="w-5 h-5 text-gray-400" 
@@ -44,15 +44,13 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onSearch }) => {
         </svg>
       </div>
       <input
-        type="text" // Cambiato da "search" a "text" per evitare il pulsante X nativo
-        className={`block w-full p-4 pl-12 ${isSearchActive ? 'pr-10' : ''} text-md text-white border-4 border-[#1E2124] rounded-2xl bg-[#36393E] placeholder-gray-400 focus:outline-none`}
-        placeholder="Cerca Pokemon..."
+        type="text"
+        className="w-full h-16 pl-12 pr-10 text-md text-white border-4 border-[#1E2124] rounded-xl bg-[#36393E] placeholder-gray-400 focus:outline-none"
+        placeholder="Cerca nell'espansione..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ 
-          // Rimuove l'X nativa di Safari/Chrome se presente
           WebkitAppearance: 'none',
-          // Supporto per Firefox
           MozAppearance: 'textfield',
           boxShadow: '0 12px 15px -3px rgba(0, 0, 0, 0.4)'
         }}

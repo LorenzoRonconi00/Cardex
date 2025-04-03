@@ -31,6 +31,7 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ card, onToggleCollected }) =>
         {/* Checkbox in top left - positioned to overlap slightly */}
         <div 
           className="absolute -top-1.5 -left-1.5 sm:-top-2.5 sm:-left-2.5 z-10 w-8 h-8 sm:w-12 sm:h-12 rounded-lg bg-[#36393E] border-2 sm:border-3 border-[#1E2124] flex items-center justify-center shadow-md"
+          style={{zIndex: 5}}
         >
           {card.isCollected && (
             <Image

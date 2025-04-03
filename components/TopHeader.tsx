@@ -2,18 +2,45 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Session } from 'next-auth';
+import { useQuery } from '@tanstack/react-query';
 
 interface TopHeaderProps {
   session: Session | null;
+}
+
+interface UserCardStats {
+  totalCount: number;
+  collectedCount: number;
+  lastUpdated: string;
 }
 
 const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { data: sessionData } = useSession();
+
+  // Fetch user-specific card stats
+  const { data: userStats, isLoading: isLoadingStats } = useQuery<UserCardStats>({
+    queryKey: ['userCardStats', sessionData?.user?.id],
+    queryFn: async () => {
+      // Assicurati che l'endpoint includa l'ID utente nei parametri di query
+      const userId = sessionData?.user?.id;
+      const response = await fetch(`/api/users/${userId}/cards/stats`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user card statistics');
+      }
+      return await response.json();
+    },
+    enabled: !!sessionData?.user?.id, // Solo se l'utente è autenticato
+    // Aggiorna i dati ogni 5 minuti
+    refetchInterval: 5 * 60 * 1000,
+    // Riutilizza la cache per 1 minuto
+    staleTime: 60 * 1000,
+  });
 
   // Chiudi il menu utente quando si clicca fuori
   useEffect(() => {
@@ -34,17 +61,32 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
   };
 
   return (
-    <div className="bg-[#2C2F33] text-white py-4 px-4 md:px-6 flex justify-between items-center">
-      <div className="flex-1 text-center md:text-left">
+    <div className="bg-[#2C2F33] text-white py-4 px-4 md:px-6 flex justify-between items-center relative">
+      <div className="flex items-center space-x-6">
         <h1 className="text-xl font-bold">CARDEX</h1>
+        
+        {/* User-specific Card Counter */}
+        {sessionData?.user?.id && (
+          <div className="hidden md:flex items-center space-x-2">
+            <div className="bg-[#36393E] border-2 border-[#1E2124] rounded-lg px-3 py-1 text-sm">
+              {isLoadingStats ? (
+                <span className="animate-pulse">Caricamento...</span>
+              ) : (
+                <span>
+                  {userStats?.collectedCount || 0}/{userStats?.totalCount || 0} carte
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* User profile section */}
       {session?.user && (
-        <div className="relative" ref={userMenuRef}>
+        <div className="relative" ref={userMenuRef} style={{ position: 'static' }}>
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center space-x-2 focus:outline-none"
+            className="flex items-center space-x-2 focus:outline-none cursor-pointer"
           >
             {session.user.image ? (
               <div className="w-8 h-8 rounded-full overflow-hidden relative">
@@ -90,14 +132,14 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
 
           {/* Dropdown menu */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-[#36393F] rounded-md shadow-lg z-50 py-1">
+            <div className="fixed right-4 mt-2 w-48 bg-[#36393F] rounded-md shadow-lg py-1" style={{zIndex: 9999}}>
               <div className="px-4 py-3 border-b border-gray-700">
                 <p className="text-sm font-medium">{session.user.name}</p>
                 <p className="text-xs text-gray-400 truncate">{session.user.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#4E5D94] transition-colors"
+                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#4E5D94] transition-colors cursor-pointer"
               >
                 Disconnetti
               </button>

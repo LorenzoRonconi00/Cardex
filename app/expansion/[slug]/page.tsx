@@ -24,7 +24,7 @@ export default function ExpansionPage() {
   }, []);
 
   // Fetch all expansions
-  const { 
+  const {
     data: expansions,
     isLoading: isLoadingExpansions
   } = useQuery({
@@ -63,32 +63,34 @@ export default function ExpansionPage() {
   return (
     <Layout>
       <div className="px-2 sm:px-4 md:px-8 lg:px-12 py-2">
-        {/* Filters and controls row - stacked on mobile, row on desktop */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 md:mb-10 lg:mb-16">
-          {/* CardCounter */}
-          <div className="w-full md:w-auto">
+        {/* Filters and controls row - flex with flex-grow-0 for fixed widths */}
+        <div className="flex flex-col md:flex-row justify-between gap-6 mb-6 md:mb-10 lg:mb-16">
+          {/* CardCounter - fixed width */}
+          <div className="flex-grow-0 md:w-64 lg:w-80">
             <CardCounter expansion={slug} />
           </div>
-          
-          {/* SearchFilter */}
-          <div className="w-full md:w-auto">
+
+          {/* SearchFilter - fixed width */}
+          <div className="flex-grow-0 md:w-64 lg:w-80">
             <SearchFilter onSearch={handleSearch} />
           </div>
-          
-          {/* Expansion Selector */}
-          <div className="w-full md:w-auto">
+
+          {/* Expansion Selector - fixed width */}
+          <div className="flex-grow-0 md:w-64 lg:w-80">
             {isLoadingExpansions || !expansions ? (
-              <div className="w-8 h-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              <div className="h-16 flex items-center justify-center bg-[#36393E] text-white border-4 border-[#1E2124] px-4 rounded-xl" style={{ boxShadow: '0 12px 15px -3px rgba(0, 0, 0, 0.4)' }}>
+                <div className="w-8 h-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              </div>
             ) : (
-              <ExpansionSelector 
-                expansions={expansions} 
-                currentExpansion={slug} 
-                onChange={handleExpansionChange} 
+              <ExpansionSelector
+                expansions={expansions}
+                currentExpansion={slug}
+                onChange={handleExpansionChange}
               />
             )}
           </div>
         </div>
-        
+
         {/* Cards Grid */}
         {isLoadingExpansions || !expansions ? (
           <div className="flex h-96 items-center justify-center">
@@ -104,7 +106,7 @@ export default function ExpansionPage() {
               {expansions.length > 0 && (
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {expansions.slice(0, 4).map(exp => (
-                    <button 
+                    <button
                       key={exp.slug}
                       className="bg-[#36393E] hover:bg-[#41454C] text-white py-2 px-3 rounded-md text-sm transition-colors"
                       onClick={() => handleExpansionChange(exp.slug)}
