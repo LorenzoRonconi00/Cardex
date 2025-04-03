@@ -5,6 +5,7 @@ import { Card } from '@/lib/types';
 import PokemonCard from './PokemonCard';
 import SaveButton from './SaveButton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 
 interface CardGridProps {
   expansion: string;
@@ -12,13 +13,14 @@ interface CardGridProps {
 }
 
 const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
+  const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const [cardsToUpdate, setCardsToUpdate] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch cards for the expansion
   const { data: cards, isLoading, error } = useQuery<Card[]>({
-    queryKey: ['cards', expansion],
+    queryKey: ['cards', expansion, session?.user?.id], // Includi l'ID utente nella query key
     queryFn: async () => {
       const response = await fetch(`/api/cards/${expansion}?t=${new Date().getTime()}`);
       if (!response.ok) {
@@ -29,22 +31,41 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    enabled: status === 'authenticated', // Esegui la query solo se l'utente è autenticato
   });
 
-  // Update cards mutation
+  // Mutation per aggiornare le carte selezionate
   const { mutate: updateCards, isPending: isSaving } = useMutation({
     mutationFn: async (updates: Record<string, boolean>) => {
+      // MODIFICATO: Preparazione dei dati completi per l'invio all'API
+      const cardsToSave = Object.entries(updates).map(([id, isCollected]) => {
+        // Trova la carta originale dalla query per ottenere tutti i dettagli
+        const originalCard = cards?.find(card => card.id === id);
+        
+        // Se non troviamo la carta, log un errore (non dovrebbe mai accadere)
+        if (!originalCard) {
+          console.error(`Card with id ${id} not found in cards data`);
+          return { id, isCollected };
+        }
+        
+        // Restituisci tutti i dati necessari della carta
+        return {
+          id,
+          isCollected,
+          name: originalCard.name,
+          imageUrl: originalCard.imageUrl,
+          expansion: originalCard.expansion
+        };
+      });
+      
+      console.log("Sending complete card data:", cardsToSave);
+      
       const response = await fetch('/api/cards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(
-          Object.entries(updates).map(([id, isCollected]) => ({
-            id,
-            isCollected,
-          }))
-        ),
+        body: JSON.stringify(cardsToSave)
       });
 
       if (!response.ok) {
@@ -59,10 +80,10 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
       const response = await fetch(`/api/cards/${expansion}?t=${new Date().getTime()}`);
       if (response.ok) {
         const freshCards = await response.json();
-        queryClient.setQueryData(['cards', expansion], freshCards);
+        queryClient.setQueryData(['cards', expansion, session?.user?.id], freshCards);
       }
       
-      queryClient.invalidateQueries({ queryKey: ['cardStats'] });
+      queryClient.invalidateQueries({ queryKey: ['cardStats', session?.user?.id] });
       
       setCardsToUpdate({});
       setHasChanges(false);
@@ -135,6 +156,30 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
       card.name.toLowerCase().includes(normalizedSearchTerm)
     );
   }, [cards, cardsToUpdate, searchTerm]);
+
+  // Loading state mentre controlliamo l'autenticazione
+  if (status === 'loading') {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+        <span className="ml-3 text-white">Verifica autenticazione...</span>
+      </div>
+    );
+  }
+
+  // Se l'utente non è autenticato, mostra un messaggio
+  if (status === 'unauthenticated') {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-xl font-medium text-white">Accesso richiesto</h3>
+          <p className="mt-2 text-gray-400">
+            Devi accedere per visualizzare la tua collezione
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

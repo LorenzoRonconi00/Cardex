@@ -56,8 +56,7 @@ async function connectToDatabase() {
 const cardSchema = new mongoose.Schema({
   id: { 
     type: String, 
-    required: true, 
-    unique: true 
+    required: true
   },
   name: { 
     type: String, 
@@ -78,8 +77,15 @@ const cardSchema = new mongoose.Schema({
   dateCollected: { 
     type: Date, 
     default: null 
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
   }
 });
+
+cardSchema.index({ id: 1, userId: 1 }, { unique: true });
 
 // Expansion Schema
 const expansionSchema = new mongoose.Schema({
