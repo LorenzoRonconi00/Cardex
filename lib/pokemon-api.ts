@@ -43,11 +43,29 @@ export async function fetchExpansions(): Promise<Expansion[]> {
       releaseDate: set.releaseDate
     }));
     
-    // Filtra solo le espansioni della serie SV
-    const svExpansions = expansions.filter(exp => exp.id.startsWith('sv'));
+    // Filtra le espansioni della serie SV e anche quelle recenti che potrebbero non iniziare con "sv"
+    // Questa è la modifica principale: ora includiamo anche altre serie recenti
+    const recentSeriesIds = ['sv', 'pgo', 'cel', 'swsh', 'sm']; // Aggiungi qui altre serie se necessario
+    const recentExpansions = expansions.filter(exp => 
+      // Filtra per nome di serie
+      recentSeriesIds.some(seriesId => exp.id.toLowerCase().startsWith(seriesId.toLowerCase())) ||
+      // O includi specificamente le espansioni che conosci per nome
+      ['Journey Together', 'Surging Sparks', 'Stellar Crown', 'Shrouded Fable', 'Paradox Rift'].includes(exp.name)
+    );
+    
+    console.log(`Fetched ${expansions.length} total expansions, filtered to ${recentExpansions.length} recent expansions`);
+    
+    // Se ci sono espansioni specifiche che ti interessano ma che non vengono catturate dal filtro,
+    // puoi loggare l'elenco completo per verificare i loro ID
+    if (process.env.NODE_ENV === 'development') {
+      console.log("All available expansion sets:");
+      expansions.forEach(exp => {
+        console.log(`   - ${exp.name} (${exp.id}) - Released: ${exp.releaseDate}`);
+      });
+    }
     
     // Sort by release date (newest first)
-    return svExpansions.sort((a, b) => 
+    return recentExpansions.sort((a, b) => 
       new Date(b.releaseDate || '').getTime() - new Date(a.releaseDate || '').getTime()
     );
   } catch (error) {

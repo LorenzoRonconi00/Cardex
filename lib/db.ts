@@ -108,21 +108,26 @@ const expansionSchema = new mongoose.Schema({
 });
 
 const wishlistItemSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    index: true  // Aggiunge un indice per migliorare le prestazioni delle query
+  },
   card: {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-    imageUrl: { type: String, required: true },
-    expansion: { type: String, required: true }
+    type: Object,
+    required: true
   },
-  price: { 
-    type: Number, 
-    required: true 
+  price: {
+    type: Number,
+    required: true
   },
-  dateAdded: { 
-    type: Date, 
-    default: Date.now 
+  dateAdded: {
+    type: Date,
+    default: Date.now
   }
-});
+}, { timestamps: true });
+
+wishlistItemSchema.index({ userId: 1, 'card.id': 1 }, { unique: true });
 
 const userSchema = new mongoose.Schema({
   name: String,

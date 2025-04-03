@@ -2,16 +2,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { WishlistItem } from '@/lib/db';
 import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-// DELETE - Rimuovi una carta dalla wishlist per ID
+// DELETE - Rimuovi una carta dalla wishlist dell'utente corrente per ID
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verifica che l'utente sia autenticato
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // Ottieni l'ID dell'utente
+    const userId = session.user.id;
+    
     const id = params.id;
     
-    console.log("API: Attempting to delete wishlist item with ID:", id);
+    console.log("API: Attempting to delete wishlist item with ID:", id, "for user:", userId);
     
     if (!id) {
       console.log("API: No ID provided");
@@ -32,20 +46,23 @@ export async function DELETE(
     
     await connectToDatabase();
     
-    // Rimuovi la carta dalla wishlist
-    const result = await WishlistItem.deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    // Rimuovi la carta dalla wishlist SOLO se appartiene all'utente corrente
+    const result = await WishlistItem.deleteOne({ 
+      _id: new mongoose.Types.ObjectId(id),
+      userId: userId  // Assicura che l'elemento appartenga all'utente
+    });
     
     console.log("API: Delete result:", result);
     
     if (result.deletedCount === 0) {
-      console.log("API: Item not found with ID:", id);
+      console.log("API: Item not found with ID:", id, "for user:", userId);
       return NextResponse.json(
-        { error: 'Wishlist item not found' },
+        { error: 'Wishlist item not found or not owned by the current user' },
         { status: 404 }
       );
     }
     
-    console.log("API: Successfully deleted item with ID:", id);
+    console.log("API: Successfully deleted item with ID:", id, "for user:", userId);
     return NextResponse.json(
       { message: 'Wishlist item removed successfully' },
       { status: 200 }

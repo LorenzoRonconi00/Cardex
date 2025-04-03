@@ -1,14 +1,28 @@
 // app/api/wishlist/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { WishlistItem } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // GET - Recupera tutti gli elementi della wishlist
 export async function GET(request: NextRequest) {
   try {
+    // Verifica che l'utente sia autenticato
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // Ottieni l'ID dell'utente
+    const userId = session.user.id;
+    
     await connectToDatabase();
     
-    // Recupera tutti gli elementi nella wishlist
-    const wishlistItems = await WishlistItem.find({})
+    // Recupera solo gli elementi nella wishlist dell'utente corrente
+    const wishlistItems = await WishlistItem.find({ userId })
       .sort({ price: 1 }) // Ordina per prezzo crescente
       .lean();
     
@@ -35,6 +49,18 @@ export async function GET(request: NextRequest) {
 // POST - Aggiungi una carta alla wishlist
 export async function POST(request: NextRequest) {
   try {
+    // Verifica che l'utente sia autenticato
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Non autorizzato' },
+        { status: 401 }
+      );
+    }
+
+    // Ottieni l'ID dell'utente
+    const userId = session.user.id;
+    
     const { card, price } = await request.json();
     
     if (!card || price === undefined) {
@@ -46,13 +72,16 @@ export async function POST(request: NextRequest) {
     
     await connectToDatabase();
     
-    // Controlla se la carta è già nella wishlist
-    const existingItem = await WishlistItem.findOne({ 'card.id': card.id });
+    // Controlla se la carta è già nella wishlist dell'utente
+    const existingItem = await WishlistItem.findOne({ 
+      userId, 
+      'card.id': card.id 
+    });
     
     if (existingItem) {
       // Aggiorna il prezzo se la carta esiste già
       await WishlistItem.updateOne(
-        { 'card.id': card.id },
+        { userId, 'card.id': card.id },
         { $set: { price } }
       );
       
@@ -61,8 +90,9 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
     } else {
-      // Inserisci una nuova carta nella wishlist
+      // Inserisci una nuova carta nella wishlist dell'utente
       const newWishlistItem = new WishlistItem({
+        userId,
         card,
         price,
         dateAdded: new Date()
@@ -80,6 +110,15 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error adding card to wishlist:', error);
+    
+    // Gestione specifica per errori di duplicazione (carta già esistente)
+    if (error instanceof Error && (error as any).code === 11000) {
+      return NextResponse.json(
+        { error: 'This card is already in your wishlist' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to add card to wishlist' },
       { status: 500 }

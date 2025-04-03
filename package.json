@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync-expansions": "node scripts/sync-expansions.mjs"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.8.0",
@@ -15,6 +16,7 @@
     "@tanstack/react-query-devtools": "^5.70.0",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
+    "dotenv": "^16.4.7",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.1",
     "next": "15.2.4",

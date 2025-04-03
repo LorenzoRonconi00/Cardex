@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Layout from '@/components/Layout';
 import { Tab } from '@headlessui/react';
 import { Card as CardType } from '@/lib/types';
@@ -29,14 +29,30 @@ export default function WishlistPage() {
   const { data: searchResults, isLoading: isLoadingSearch } = useQuery({
     queryKey: ['cardSearch', debouncedSearchTerm],
     queryFn: async () => {
-      const url = `/api/cards/search?q=${encodeURIComponent(debouncedSearchTerm)}&limit=30`;
+      // Costruisci l'URL con il parametro di ricerca se presente
+      let url = `/api/cards/search?limit=30`;
+
+      if (debouncedSearchTerm) {
+        url += `&q=${encodeURIComponent(debouncedSearchTerm)}`;
+      }
+
+      console.log('Searching with URL:', url);
+
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to search cards');
+        const errorText = await response.text();
+        console.error('Search error:', errorText);
+        throw new Error(`Failed to search cards: ${response.status} ${errorText}`);
       }
-      return response.json() as Promise<CardType[]>;
+
+      const data = await response.json();
+      console.log(`Received ${data.length} search results`);
+      return data as CardType[];
     },
-    enabled: activeTab === 1, // Solo quando siamo nel tab "Aggiungi Carte"
+    // Abilitato sempre quando siamo nel tab "Aggiungi Carte"
+    enabled: activeTab === 1,
+    staleTime: 60000, // Mantieni i risultati freschi per 1 minuto
+    retry: 2, // Riprova due volte in caso di errore
   });
 
   // Fetch wishlist items
@@ -125,10 +141,24 @@ export default function WishlistPage() {
     setIsModalOpen(true);
   };
 
+  // Filtra duplicati dai risultati di ricerca (sempre applicato, indipendentemente dai risultati)
+  const filteredSearchResults = useMemo(() => {
+    if (!searchResults) return [];
+
+    const seenIds = new Set();
+    return searchResults.filter(card => {
+      if (seenIds.has(card.id)) {
+        return false;
+      }
+      seenIds.add(card.id);
+      return true;
+    });
+  }, [searchResults]);
+
   // Ordina gli elementi della wishlist per prezzo (dal più basso al più alto)
-  const sortedWishlistItems = React.useMemo(() => {
-    if (!wishlistItems) return [];
-    return [...wishlistItems].sort((a, b) => a.price - b.price);
+  // Questo hook è sempre chiamato, indipendentemente dal fatto che wishlistItems sia null o undefined
+  const sortedWishlistItems = useMemo(() => {
+    return wishlistItems ? [...wishlistItems].sort((a, b) => a.price - b.price) : [];
   }, [wishlistItems]);
 
   // Initial loading state before client-side rendering
@@ -148,7 +178,7 @@ export default function WishlistPage() {
         <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
           <Tab.List className="relative flex space-x-2 rounded-xl bg-[#1E2124] p-1 mb-6">
             {/* Indicatore scorrevole */}
-            <div 
+            <div
               className="absolute z-10 top-1 bottom-1 rounded-lg bg-[#36393E] shadow-lg transition-all duration-300 ease-in-out"
               style={{
                 left: activeTab === 0 ? '0.25rem' : '50%',
@@ -156,7 +186,7 @@ export default function WishlistPage() {
                 transform: activeTab === 0 ? 'none' : 'translateX(-0.25rem)'
               }}
             ></div>
-            
+
             <Tab
               className={({ selected }: { selected: boolean }) =>
                 `w-full rounded-lg py-2.5 text-sm font-medium leading-5 z-20 transition-colors duration-300 cursor-pointer
@@ -185,15 +215,14 @@ export default function WishlistPage() {
             <Tab.Panels>
               {/* Tab pannello 1: La mia Wishlist */}
               <Tab.Panel
-                className={`transform transition-all duration-300 ${
-                  activeTab === 0 ? 'translate-x-0 opacity-100' : 'absolute inset-0 -translate-x-full opacity-0'
-                }`}
+                className={`transform transition-all duration-300 ${activeTab === 0 ? 'translate-x-0 opacity-100' : 'absolute inset-0 -translate-x-full opacity-0'
+                  }`}
               >
                 {isLoadingWishlist ? (
                   <div className="flex h-64 items-center justify-center">
                     <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
                   </div>
-                ) : !wishlistItems || wishlistItems.length === 0 ? (
+                ) : !sortedWishlistItems.length ? (
                   <div className="flex h-64 items-center justify-center">
                     <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
                       <h3 className="text-xl font-medium text-white mb-2">Nessuna carta nella wishlist</h3>
@@ -208,16 +237,16 @@ export default function WishlistPage() {
                     <div className="flex justify-between items-center mb-4 bg-[#36393E] p-4 rounded-lg">
                       <div className="text-white font-medium">La tua Wishlist</div>
                       <div className="text-gray-300 text-sm">
-                        {wishlistItems.length} {wishlistItems.length === 1 ? 'carta' : 'carte'} •
-                        Totale: {wishlistItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}€
+                        {sortedWishlistItems.length} {sortedWishlistItems.length === 1 ? 'carta' : 'carte'} •
+                        Totale: {sortedWishlistItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}€
                       </div>
                     </div>
 
                     {/* Lista carte */}
                     <div className="space-y-2">
-                      {sortedWishlistItems.map((item) => (
+                      {sortedWishlistItems.map((item, index) => (
                         <WishlistItemRow
-                          key={item._id || item.id}
+                          key={`${item._id || item.id}-${index}`}
                           item={item}
                           onRemove={() => {
                             // Usa _id (MongoDB ID) se disponibile, altrimenti usa id
@@ -233,9 +262,8 @@ export default function WishlistPage() {
 
               {/* Tab pannello 2: Aggiungi Carte */}
               <Tab.Panel
-                className={`transform transition-all duration-300 ${
-                  activeTab === 1 ? 'translate-x-0 opacity-100' : 'absolute inset-0 translate-x-full opacity-0'
-                }`}
+                className={`transform transition-all duration-300 ${activeTab === 1 ? 'translate-x-0 opacity-100' : 'absolute inset-0 translate-x-full opacity-0'
+                  }`}
               >
                 <div className="mb-16 w-full max-w-md mx-auto">
                   <SearchFilter onSearch={handleSearch} />
@@ -248,27 +276,28 @@ export default function WishlistPage() {
                   <div className="flex h-64 items-center justify-center">
                     <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
                   </div>
-                ) : !searchResults || searchResults.length === 0 ? (
+                ) : !filteredSearchResults.length ? (
                   <div className="flex h-64 items-center justify-center">
                     <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
                       <h3 className="text-xl font-medium text-white mb-2">
                         {searchTerm
                           ? `Nessun risultato per "${searchTerm}"`
-                          : "Utilizza la ricerca per trovare carte"}
+                          : "Caricamento delle carte disponibili..."}
                       </h3>
                       <p className="text-gray-400">
                         {searchTerm
                           ? "Prova a cercare utilizzando un altro termine o controlla se la carta è già nella tua collezione o wishlist"
-                          : "Inserisci il nome di un Pokémon per trovare le sue carte Illustration Rare"
-                        }
+                          : isLoadingSearch
+                            ? "Stiamo caricando le carte disponibili, attendere prego..."
+                            : "Se non vedi carte, potrebbe esserci un problema con il database. Contatta l'amministratore."}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14">
-                    {searchResults.map((card) => (
+                    {filteredSearchResults.map((card, index) => (
                       <WishlistCard
-                        key={card.id}
+                        key={`${card.id}-${index}`}
                         card={card}
                         onAdd={() => handleAddToWishlist(card)}
                       />
