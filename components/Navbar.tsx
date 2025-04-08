@@ -57,6 +57,7 @@ const Navbar: React.FC = () => {
           alt="Cardex Logo"
           width={48}
           height={48}
+          style={{ width: '100%', height: 'auto' }}
           className="object-contain"
         />
       </div>
@@ -88,7 +89,7 @@ const Navbar: React.FC = () => {
             alt="Card List"
             width={28}
             height={28}
-            className="object-contain"
+            style={{ width: 'auto', height: 'auto', maxWidth: '28px', maxHeight: '28px' }}
           />
         </div>
         
@@ -103,7 +104,7 @@ const Navbar: React.FC = () => {
             alt="Wishlist"
             width={28}
             height={28}
-            className="object-contain"
+            style={{ width: 'auto', height: 'auto', maxWidth: '28px', maxHeight: '28px' }}
           />
         </div>
       </div>
@@ -118,7 +119,7 @@ const Navbar: React.FC = () => {
           alt="Logout"
           width={28}
           height={28}
-          className="object-contain"
+          style={{ width: 'auto', height: 'auto', maxWidth: '28px', maxHeight: '28px' }}
         />
       </div>
     </nav>

@@ -21,7 +21,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body suppressHydrationWarning className={`${inter.className} antialiased`}>
         <Providers session={session}>{children}</Providers>
       </body>
     </html>
