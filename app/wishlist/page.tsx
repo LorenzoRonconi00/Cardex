@@ -281,7 +281,7 @@ export default function WishlistPage() {
                     <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
                       <h3 className="text-xl font-medium text-white mb-2">
                         {searchTerm
-                          ? `Nessun risultato per "${searchTerm}"`
+                          ? `Nessun risultato per &quot;${searchTerm}&quot;`
                           : "Caricamento delle carte disponibili..."}
                       </h3>
                       <p className="text-gray-400">

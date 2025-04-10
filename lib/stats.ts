@@ -1,7 +1,7 @@
 // lib/models/stats.ts
 import mongoose from 'mongoose';
 import connectToDatabase from './db';
-import { Card, Expansion } from './db';
+import { Card } from './db';
 import { fetchExpansions, fetchCardsByExpansion } from '@/lib/pokemon-api';
 
 // Define the Stats schema

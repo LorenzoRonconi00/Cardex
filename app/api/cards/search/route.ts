@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.log("API Search: Available expansions in the database:", allExpansions);
 
     // Costruisci la query di ricerca
-    let searchFilter: any = {};
+    let searchFilter: Record<string, unknown> = {};
 
     // Aggiungi il filtro per escludere le carte già collezionate o nella wishlist
     searchFilter.id = { $nin: excludedCardIds };

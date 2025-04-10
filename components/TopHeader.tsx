@@ -20,7 +20,6 @@ interface UserCardStats {
 const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { data: sessionData } = useSession();
 
   // Fetch user-specific card stats

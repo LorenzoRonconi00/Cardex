@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ALT_ART_IDENTIFIERS, PokemonTCGCard, PokemonTCGSet, Card, Expansion } from './types';
+import { PokemonTCGCard, PokemonTCGSet, Card, Expansion } from './types';
 
 const API_BASE_URL = 'https://api.pokemontcg.io/v2';
 const API_KEY = process.env.POKEMON_TCG_API_KEY;
@@ -165,7 +165,7 @@ export async function fetchCardById(cardId: string): Promise<Card | null> {
 /**
  * Get the 13 most recent expansions with Alt Art cards
  */
-export async function getRecentExpansionsWithAltArt(limit = 13): Promise<Expansion[]> {
+export async function getRecentExpansionsWithAltArt(_limit = 13): Promise<Expansion[]> {
   try {
     // Non utilizziamo più questa funzione nella nuova logica
     // Torna una lista vuota

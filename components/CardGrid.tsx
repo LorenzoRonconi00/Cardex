@@ -74,7 +74,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
 
       return response.json();
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       console.log("Save successful, updating UI with new data");
       
       const response = await fetch(`/api/cards/${expansion}?t=${new Date().getTime()}`);
@@ -217,7 +217,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <h3 className="text-xl font-medium text-white">Nessun risultato per "{searchTerm}"</h3>
+          <h3 className="text-xl font-medium text-white">Nessun risultato per &quot;{searchTerm}&quot;</h3>
           <p className="mt-2 text-gray-400">
             Prova a cercare un altro Pokémon in questa espansione
           </p>

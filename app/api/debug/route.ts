@@ -56,7 +56,7 @@ interface DebugInfo {
 }
 
 // GET /api/debug
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     // Definiamo alcuni set che sappiamo contenere Alt Art
     const setIds: string[] = ['sv1', 'sv2', 'sv3', 'sv4', 'swsh12', 'swsh10'];

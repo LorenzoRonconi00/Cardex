@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import CardGrid from '@/components/CardGrid';
@@ -12,7 +11,6 @@ import { Expansion } from '@/lib/types';
 import { useSession } from 'next-auth/react';
 
 export default function HomePage() {
-  const router = useRouter();
   const { data: session, status } = useSession();
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +21,7 @@ export default function HomePage() {
   }, []);
 
   // fetch all expansions
-  const { 
+  const {
     data: expansions,
     isLoading: isLoadingExpansions
   } = useQuery({
@@ -84,10 +82,10 @@ export default function HomePage() {
           {isLoadingExpansions || !expansions ? (
             <div className="w-8 h-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
           ) : (
-            <ExpansionSelector 
-              expansions={expansions} 
-              currentExpansion={currentExpansion} 
-              onChange={handleExpansionChange} 
+            <ExpansionSelector
+              expansions={expansions}
+              currentExpansion={currentExpansion}
+              onChange={handleExpansionChange}
             />
           )}
         </div>
@@ -100,7 +98,7 @@ export default function HomePage() {
             <div className="text-center">
               <h3 className="text-xl font-medium text-white">Nessuna espansione selezionata</h3>
               <p className="mt-2 text-gray-400">
-                Seleziona un'espansione per visualizzare le carte
+                Seleziona un&apos;espansione per visualizzare le carte
               </p>
             </div>
           </div>

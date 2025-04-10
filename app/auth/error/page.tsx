@@ -13,7 +13,7 @@ export default function ErrorPage() {
         <h1 className="text-2xl font-bold text-white mb-4">Errore di autenticazione</h1>
         
         <div className="bg-red-600/20 border border-red-600 rounded-md p-4 mb-6">
-          <p className="text-white">Si è verificato un errore durante l'autenticazione:</p>
+          <p className="text-white">Errore durante autenticazione:</p>
           <p className="font-mono text-sm text-red-400 mt-2">{error || 'Errore sconosciuto'}</p>
         </div>
         
@@ -23,7 +23,7 @@ export default function ErrorPage() {
           </p>
           <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
             <li>Controlla se le credenziali OAuth sono configurate correttamente</li>
-            <li>Verifica che NEXTAUTH_URL sia impostato correttamente nell'env</li>
+            <li>Verifica che NEXTAUTH_URL sia impostato correttamente nell&apos;env</li>
             <li>Assicurati che gli URI di redirect siano configurati in Google Cloud Console</li>
             <li>Controlla che MongoDB sia accessibile e funzionante</li>
           </ul>

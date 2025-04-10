@@ -101,7 +101,7 @@ export default function ExpansionPage() {
             <div className="text-center bg-[#1E2124] p-4 sm:p-6 rounded-lg shadow-lg border border-gray-700">
               <h3 className="text-lg sm:text-xl font-medium text-white">Espansione non trovata</h3>
               <p className="mt-2 text-sm sm:text-base text-white">
-                Espansione non trovata. Controlla il tuo URL o prova a selezionare un'altra espansione.
+                Espansione non trovata. Controlla il tuo URL o prova a selezionare un&apos;altra espansione.
               </p>
               {expansions.length > 0 && (
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">

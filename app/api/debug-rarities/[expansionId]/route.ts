@@ -12,6 +12,28 @@ const api = axios.create({
   },
 });
 
+interface PokemonCard {
+  id: string;
+  name: string;
+  number: string;
+  rarity?: string;
+  images: {
+    small: string;
+  };
+}
+
+interface RarityStats {
+  [key: string]: {
+    count: number;
+    examples: Array<{
+      id: string;
+      name: string;
+      number: string;
+      image: string;
+    }>;
+  };
+}
+
 // GET /api/debug-rarities/[expansionId]
 export async function GET(
   request: Request,
@@ -36,21 +58,21 @@ export async function GET(
     const allCards = response.data.data;
     
     // Analyze rarities
-    const rarityStats: Record<string, any> = {};
+    const rarityStats: RarityStats = {};
     const rarities = new Set<string>();
     
     // Collect all unique rarities
-    allCards.forEach((card: any) => {
+    allCards.forEach((card: PokemonCard) => {
       if (card.rarity) rarities.add(card.rarity);
     });
     
     // For each rarity, analyze cards
     Array.from(rarities).forEach((rarity: string) => {
-      const cardsWithRarity = allCards.filter((card: any) => card.rarity === rarity);
+      const cardsWithRarity = allCards.filter((card: PokemonCard) => card.rarity === rarity);
       
       rarityStats[rarity] = {
         count: cardsWithRarity.length,
-        examples: cardsWithRarity.slice(0, 5).map((card: any) => ({
+        examples: cardsWithRarity.slice(0, 5).map((card: PokemonCard) => ({
           id: card.id,
           name: card.name,
           number: card.number,

@@ -18,6 +18,7 @@ if (!process.env.MONGODB_URI) {
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Inizializzazione della cache
+// eslint-disable-next-line prefer-const
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
 // Se la cache non esiste, la creiamo

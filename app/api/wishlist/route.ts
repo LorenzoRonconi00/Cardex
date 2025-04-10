@@ -4,8 +4,12 @@ import connectToDatabase, { WishlistItem } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
+interface MongoDBError extends Error {
+  code?: number;
+}
+
 // GET - Recupera tutti gli elementi della wishlist
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Verifica che l'utente sia autenticato
     const session = await getServerSession(authOptions);
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
     console.error('Error adding card to wishlist:', error);
     
     // Gestione specifica per errori di duplicazione (carta già esistente)
-    if (error instanceof Error && (error as any).code === 11000) {
+    if (error instanceof Error && (error as MongoDBError).code === 11000) {
       return NextResponse.json(
         { error: 'This card is already in your wishlist' },
         { status: 409 }

@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/cards - Ottiene tutte le carte raccolte
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Verifica l'autenticazione dell'utente
     const session = await getServerSession(authOptions);
