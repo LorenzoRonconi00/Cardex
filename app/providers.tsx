@@ -4,6 +4,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SessionProvider } from 'next-auth/react';
+import { Session } from 'next-auth';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -18,7 +19,7 @@ const queryClient = new QueryClient({
 
 interface ProvidersProps {
   children: React.ReactNode;
-  session?: any;
+  session?: Session | null;
 }
 
 export function Providers({ children, session }: ProvidersProps) {

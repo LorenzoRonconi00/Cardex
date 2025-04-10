@@ -9,7 +9,7 @@ interface MongoDBError extends Error {
 }
 
 // GET - Recupera tutti gli elementi della wishlist
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Verifica che l'utente sia autenticato
     const session = await getServerSession(authOptions);

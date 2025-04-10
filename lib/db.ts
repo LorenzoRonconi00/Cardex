@@ -8,6 +8,7 @@ interface MongooseCache {
 
 // Estensione del tipo global di NodeJS
 declare global {
+  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined;
 }
 

@@ -227,7 +227,7 @@ export default function WishlistPage() {
                     <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
                       <h3 className="text-xl font-medium text-white mb-2">Nessuna carta nella wishlist</h3>
                       <p className="text-gray-400">
-                        Aggiungi delle carte alla tua wishlist usando il tab "Aggiungi Carte".
+                        Aggiungi delle carte alla tua wishlist usando il tab Aggiungi Carte.
                       </p>
                     </div>
                   </div>

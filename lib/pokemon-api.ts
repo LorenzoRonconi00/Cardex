@@ -165,7 +165,7 @@ export async function fetchCardById(cardId: string): Promise<Card | null> {
 /**
  * Get the 13 most recent expansions with Alt Art cards
  */
-export async function getRecentExpansionsWithAltArt(_limit = 13): Promise<Expansion[]> {
+export async function getRecentExpansionsWithAltArt(): Promise<Expansion[]> {
   try {
     // Non utilizziamo più questa funzione nella nuova logica
     // Torna una lista vuota
