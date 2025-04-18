@@ -18,37 +18,35 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
   const [cardsToUpdate, setCardsToUpdate] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Fetch cards for the expansion
+  // Fetch cards for the expansion directly from DB (optimized)
   const { data: cards, isLoading, error } = useQuery<Card[]>({
-    queryKey: ['cards', expansion, session?.user?.id], // Includi l'ID utente nella query key
+    queryKey: ['expansion-cards', expansion, session?.user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/cards/${expansion}?t=${new Date().getTime()}`);
+      // Direct DB query instead of API call
+      const response = await fetch(`/api/cards/direct/${expansion}?t=${new Date().getTime()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch cards');
       }
       return response.json();
     },
-    staleTime: 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes for better performance
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    enabled: status === 'authenticated', // Esegui la query solo se l'utente è autenticato
+    refetchOnWindowFocus: false, // Prevent excessive refetching
+    enabled: status === 'authenticated', // Only fetch if authenticated
   });
 
-  // Mutation per aggiornare le carte selezionate
+  // Mutation for updating selected cards
   const { mutate: updateCards, isPending: isSaving } = useMutation({
     mutationFn: async (updates: Record<string, boolean>) => {
-      // MODIFICATO: Preparazione dei dati completi per l'invio all'API
+      // Prepare complete card data for API
       const cardsToSave = Object.entries(updates).map(([id, isCollected]) => {
-        // Trova la carta originale dalla query per ottenere tutti i dettagli
         const originalCard = cards?.find(card => card.id === id);
         
-        // Se non troviamo la carta, log un errore (non dovrebbe mai accadere)
         if (!originalCard) {
           console.error(`Card with id ${id} not found in cards data`);
           return { id, isCollected };
         }
         
-        // Restituisci tutti i dati necessari della carta
         return {
           id,
           isCollected,
@@ -58,7 +56,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
         };
       });
       
-      console.log("Sending complete card data:", cardsToSave);
+      console.log("Sending card data:", cardsToSave);
       
       const response = await fetch('/api/cards', {
         method: 'POST',
@@ -77,20 +75,20 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     onSuccess: async () => {
       console.log("Save successful, updating UI with new data");
       
-      const response = await fetch(`/api/cards/${expansion}?t=${new Date().getTime()}`);
-      if (response.ok) {
-        const freshCards = await response.json();
-        queryClient.setQueryData(['cards', expansion, session?.user?.id], freshCards);
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ['cardStats', session?.user?.id] });
+      // Invalidate and refetch to ensure data consistency
+      queryClient.invalidateQueries({ 
+        queryKey: ['expansion-cards', expansion, session?.user?.id] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['cardStats', session?.user?.id] 
+      });
       
       setCardsToUpdate({});
       setHasChanges(false);
     },
     onError: (error) => {
       console.error("Error saving cards:", error);
-      alert("Failed to save your changes. Please try again.");
+      alert("Impossibile salvare le modifiche. Riprova più tardi.");
     }
   });
 
@@ -105,6 +103,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
       const originalCards = cards || [];
       const originalCard = originalCards.find(card => card.id === id);
       
+      // If toggling back to original state, remove from updates
       if (originalCard && originalCard.isCollected === isCollected) {
         delete updated[id];
         console.log(`Card ${id} returned to original state, removing from updates`);
@@ -130,7 +129,6 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     
     if (Object.keys(cardsToUpdate).length > 0) {
       updateCards(cardsToUpdate);
-      console.log("Applying optimistic updates to UI");
     }
   };
 
@@ -138,7 +136,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
   const displayCards = React.useMemo(() => {
     if (!cards) return [];
 
-    // First apply local changes
+    // Apply local changes
     const updatedCards = cards.map((card) => ({
       ...card,
       isCollected: cardsToUpdate.hasOwnProperty(card.id)
@@ -146,7 +144,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
         : card.isCollected,
     }));
     
-    // Then filter by search term if it exists
+    // Filter by search term if it exists
     if (!searchTerm || searchTerm.trim() === '') {
       return updatedCards;
     }
@@ -157,7 +155,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }, [cards, cardsToUpdate, searchTerm]);
 
-  // Loading state mentre controlliamo l'autenticazione
+  // Authentication check loading state
   if (status === 'loading') {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -167,7 +165,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
 
-  // Se l'utente non è autenticato, mostra un messaggio
+  // Unauthenticated state
   if (status === 'unauthenticated') {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -181,6 +179,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -189,17 +188,19 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <h3 className="text-xl font-medium text-red-500">Errore nel caricamento delle carte.</h3>
-          <p className="mt-2 text-gray-400">Perfavore riprova piu tardi.</p>
+          <p className="mt-2 text-gray-400">Perfavore riprova più tardi.</p>
         </div>
       </div>
     );
   }
 
+  // No cards state
   if (!cards || cards.length === 0) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -213,6 +214,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
   
+  // No search results state
   if (displayCards.length === 0 && searchTerm) {
     return (
       <div className="flex h-96 items-center justify-center">
