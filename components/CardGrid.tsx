@@ -218,8 +218,8 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
   if (displayCards.length === 0 && searchTerm) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <h3 className="text-xl font-medium text-white">Nessun risultato per &quot;{searchTerm}&quot;</h3>
+        <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
+          <h3 className="text-xl font-medium text-white mb-2">Nessun risultato per &quot;{searchTerm}&quot;</h3>
           <p className="mt-2 text-gray-400">
             Prova a cercare un altro Pokémon in questa espansione
           </p>
@@ -230,7 +230,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-8 p-2 md:p-4 md:px-8 lg:px-16 xl:px-28">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6">
         {displayCards.map((card) => (
           <PokemonCard
             key={card.id}

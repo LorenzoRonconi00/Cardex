@@ -7,9 +7,14 @@ import { authOptions } from './api/auth/[...nextauth]/route';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'PokeBinder';
+
 export const metadata = {
-  title: 'Cardex - Pokémon Alt Art Card Collector',
-  description: 'Track your Pokémon Trading Card Game Alt Art collection with Cardex',
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  description: 'Track your Pokémon Card collection with PokeBinder',
 };
 
 export default async function RootLayout({

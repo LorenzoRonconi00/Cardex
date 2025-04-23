@@ -69,7 +69,7 @@ export default function HomePage() {
             <h2 className="text-xl text-white">
               Benvenuto, <span className="font-semibold">{session.user.name}</span>!
             </h2>
-            <p className="text-gray-400">Gestisci la tua collezione di carte Alt Art Pokémon</p>
+            <p className="text-gray-400">Gestisci la tua collezione di carte Pokémon</p>
           </div>
         )}
 
