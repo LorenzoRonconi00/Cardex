@@ -51,10 +51,10 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
 
   // Update search results when debounced search term changes
   useEffect(() => {
-    if (onSearch) {
+    if (onSearch && isOnExpansionPage) {
       onSearch(debouncedSearchTerm);
     }
-  }, [debouncedSearchTerm, onSearch]);
+  }, [debouncedSearchTerm, onSearch, isOnExpansionPage]);
 
   // Chiudi il menu utente quando si clicca fuori
   useEffect(() => {
@@ -77,7 +77,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
   // Clear search handler
   const handleClearSearch = () => {
     setSearchTerm('');
-    if (onSearch) {
+    if (onSearch && isOnExpansionPage) {
       onSearch('');
     }
   };
@@ -129,7 +129,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
             <input
               type="text"
               className="w-full h-8 md:h-10 pl-8 pr-8 md:pl-10 md:pr-10 text-xs md:text-sm text-white border-2 border-[#1E2124] rounded-lg bg-[#36393E] placeholder-gray-400 focus:outline-none"
-              placeholder="Cerca nell'espansione..."
+              placeholder="Cerca tutte le carte..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ 

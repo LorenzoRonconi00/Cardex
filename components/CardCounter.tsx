@@ -65,12 +65,6 @@ const CardCounter: React.FC<CardCounterProps> = ({ expansion }) => {
         <span className="bg-transparent border-2 border-[#1E2124] px-3 py-1 rounded-lg text-sm">
           {currentExpansionStats.collected}/{currentExpansionStats.total} carte
         </span>
-        <div className="mt-1 h-1 w-24 bg-[#1E2124] rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-green-500 transition-all duration-300 ease-out"
-            style={{ width: `${currentExpansionStats.percentage}%` }}
-          />
-        </div>
       </div>
     </div>
   );

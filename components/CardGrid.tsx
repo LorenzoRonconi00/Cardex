@@ -10,9 +10,16 @@ import { useSession } from 'next-auth/react';
 interface CardGridProps {
   expansion: string;
   searchTerm?: string;
+  searchResults?: Card[]; // Risultati di ricerca globale
+  isGlobalSearch?: boolean; // Flag per indicare se è attiva la ricerca globale
 }
 
-const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
+const CardGrid: React.FC<CardGridProps> = ({ 
+  expansion, 
+  searchTerm = '', 
+  searchResults, 
+  isGlobalSearch = false 
+}) => {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const [cardsToUpdate, setCardsToUpdate] = useState<Record<string, boolean>>({});
@@ -32,7 +39,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes for better performance
     refetchOnMount: true,
     refetchOnWindowFocus: false, // Prevent excessive refetching
-    enabled: status === 'authenticated', // Only fetch if authenticated
+    enabled: status === 'authenticated' && !isGlobalSearch, // Solo se autenticato e non in modalità ricerca globale
   });
 
   // Mutation for updating selected cards
@@ -40,7 +47,9 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     mutationFn: async (updates: Record<string, boolean>) => {
       // Prepare complete card data for API
       const cardsToSave = Object.entries(updates).map(([id, isCollected]) => {
-        const originalCard = cards?.find(card => card.id === id);
+        // Determina quali dati usare: risultati di ricerca globale o carte dell'espansione
+        const cardList = searchResults || cards || [];
+        const originalCard = cardList.find(card => card.id === id);
         
         if (!originalCard) {
           console.error(`Card with id ${id} not found in cards data`);
@@ -82,6 +91,9 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
       queryClient.invalidateQueries({ 
         queryKey: ['cardStats', session?.user?.id] 
       });
+      queryClient.invalidateQueries({
+        queryKey: ['cardSearch']
+      });
       
       setCardsToUpdate({});
       setHasChanges(false);
@@ -100,8 +112,9 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
       const updated = { ...prev };
       updated[id] = isCollected;
       
-      const originalCards = cards || [];
-      const originalCard = originalCards.find(card => card.id === id);
+      // Usa la fonte di dati appropriata in base alla modalità attuale
+      const cardList = searchResults || cards || [];
+      const originalCard = cardList.find(card => card.id === id);
       
       // If toggling back to original state, remove from updates
       if (originalCard && originalCard.isCollected === isCollected) {
@@ -132,8 +145,20 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     }
   };
 
-  // Filter and update local card state with toggle and search
+  // Decide which cards to display: search results or normal expansion cards
   const displayCards = React.useMemo(() => {
+    // Se siamo in modalità ricerca globale, usa i risultati di ricerca
+    if (isGlobalSearch && searchResults) {
+      // Applica le modifiche locali ai risultati di ricerca
+      return searchResults.map((card) => ({
+        ...card,
+        isCollected: cardsToUpdate.hasOwnProperty(card.id)
+          ? cardsToUpdate[card.id]
+          : card.isCollected,
+      }));
+    }
+
+    // Altrimenti usa le carte dell'espansione corrente
     if (!cards) return [];
 
     // Apply local changes
@@ -144,7 +169,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
         : card.isCollected,
     }));
     
-    // Filter by search term if it exists
+    // Filter by search term if it exists (ricerca locale nell'espansione)
     if (!searchTerm || searchTerm.trim() === '') {
       return updatedCards;
     }
@@ -153,7 +178,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     return updatedCards.filter(card => 
       card.name.toLowerCase().includes(normalizedSearchTerm)
     );
-  }, [cards, cardsToUpdate, searchTerm]);
+  }, [cards, searchResults, cardsToUpdate, searchTerm, isGlobalSearch]);
 
   // Authentication check loading state
   if (status === 'loading') {
@@ -179,8 +204,8 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
 
-  // Loading state
-  if (isLoading) {
+  // Loading state - solo quando non siamo in modalità ricerca globale
+  if (isLoading && !isGlobalSearch) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
@@ -188,8 +213,8 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state - solo quando non siamo in modalità ricerca globale
+  if (error && !isGlobalSearch) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
@@ -201,27 +226,19 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
   }
 
   // No cards state
-  if (!cards || cards.length === 0) {
+  if (displayCards.length === 0) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <h3 className="text-xl font-medium text-white">Nessuna Illustration Rare disponibile</h3>
+          <h3 className="text-xl font-medium text-white">
+            {isGlobalSearch 
+              ? "Nessuna carta trovata"
+              : "Nessuna Illustration Rare disponibile"}
+          </h3>
           <p className="mt-2 text-gray-400">
-            Questa espansione non sembra avere Illustration Rare
-          </p>
-        </div>
-      </div>
-    );
-  }
-  
-  // No search results state
-  if (displayCards.length === 0 && searchTerm) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
-          <h3 className="text-xl font-medium text-white mb-2">Nessun risultato per &quot;{searchTerm}&quot;</h3>
-          <p className="mt-2 text-gray-400">
-            Prova a cercare un altro Pokémon in questa espansione
+            {isGlobalSearch 
+              ? "Prova a cercare con un altro termine"
+              : "Questa espansione non sembra avere Illustration Rare"}
           </p>
         </div>
       </div>
@@ -230,7 +247,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6 px-md:px-12 lg:px-16 2xl:px-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6 px-md:px-12 lg:px-16 2xl:px-20">
         {displayCards.map((card) => (
           <PokemonCard
             key={card.id}

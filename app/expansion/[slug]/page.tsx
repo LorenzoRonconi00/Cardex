@@ -8,7 +8,7 @@ import Layout from '@/components/Layout';
 import CardGrid from '@/components/CardGrid';
 import CardCounter from '@/components/CardCounter';
 import ExpansionSelector from '@/components/ExpansionSelector';
-import { Expansion } from '@/lib/types';
+import { Card, Expansion } from '@/lib/types';
 
 export default function ExpansionPage() {
   const params = useParams();
@@ -35,6 +35,43 @@ export default function ExpansionPage() {
       }
       return await response.json() as Expansion[];
     },
+  });
+
+  // Fetch all cards based on search term (global search across ALL expansions)
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearch
+  } = useQuery<Card[]>({
+    queryKey: ['cardSearch', searchTerm],
+    queryFn: async () => {
+      // Se non c'è un termine di ricerca, restituisci un array vuoto
+      if (!searchTerm) {
+        return [];
+      }
+
+      // Costruisci l'URL con il parametro di ricerca - SENZA il filtro per espansione
+      let url = `/api/cards/search?limit=100`;
+
+      if (searchTerm) {
+        url += `&q=${encodeURIComponent(searchTerm)}`;
+      }
+
+      // NON aggiungiamo il filtro per espansione per avere una ricerca globale
+      console.log('Searching with URL:', url);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Search error:', errorText);
+        throw new Error(`Failed to search cards: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received ${data.length} search results`);
+      return data as Card[];
+    },
+    enabled: !!searchTerm && searchTerm.length >= 2, // Abilita la query solo quando c'è un termine di ricerca di almeno 2 caratteri
+    staleTime: 1000 * 60 * 5, // Cache per 5 minuti
   });
 
   // Find the current expansion from the list
@@ -112,7 +149,31 @@ export default function ExpansionPage() {
               )}
             </div>
           </div>
+        ) : searchTerm && searchTerm.length >= 2 ? (
+          // Se c'è un termine di ricerca, mostra i risultati della ricerca
+          isLoadingSearch ? (
+            <div className="flex h-96 items-center justify-center">
+              <div className="w-12 h-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+              <span className="ml-3 text-white">Ricerca in corso...</span>
+            </div>
+          ) : !searchResults || searchResults.length === 0 ? (
+            <div className="flex h-96 items-center justify-center">
+              <div className="text-center p-6 bg-[#1E2124] rounded-lg shadow-md">
+                <h3 className="text-xl font-medium text-white mb-2">Nessun risultato per &quot;{searchTerm}&quot;</h3>
+                <p className="mt-2 text-gray-400">
+                  Prova a cercare un altro Pokémon
+                </p>
+              </div>
+            </div>
+          ) : (
+            <CardGrid 
+              expansion={slug} 
+              searchResults={searchResults} 
+              isGlobalSearch={true} 
+            />
+          )
         ) : (
+          // Altrimenti mostra la griglia normale
           <CardGrid expansion={slug} searchTerm={searchTerm} />
         )}
       </div>
