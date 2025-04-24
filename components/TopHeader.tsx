@@ -61,7 +61,6 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session }) => {
   return (
     <div className="bg-[#2C2F33] text-white py-4 px-4 md:px-6 flex justify-between items-center relative">
       <div className="flex items-center space-x-6">
-        <h1 className="text-xl font-bold">CARDEX</h1>
         
         {/* User-specific Card Counter */}
         {sessionData?.user?.id && (

@@ -230,7 +230,7 @@ const CardGrid: React.FC<CardGridProps> = ({ expansion, searchTerm = '' }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6 px-md:px-12 lg:px-16 2xl:px-20">
         {displayCards.map((card) => (
           <PokemonCard
             key={card.id}
