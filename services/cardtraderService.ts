@@ -163,25 +163,12 @@ export class CardTraderService {
     
     // Verifica nei nomi
     const isAltArtInName = 
-      nameEn.includes('alt art') || 
-      nameEn.includes('alternate art') || 
-      nameEn.includes('alternate full art') ||
-      nameEn.includes('alt full art') ||
-      nameEn.includes('illustration rare') || 
-      nameEn.includes('special illustration rare') ||
-      nameEn.includes('sir') ||
-      nameEn.includes('special art') ||
-      nameEn.includes('full art');
+      nameEn.includes('illustration rare')
     
     // Verifica nelle descrizioni
     const isAltArtInDescription = 
-      description.includes('alt art') || 
-      description.includes('alternate art') ||
-      description.includes('illustration rare') || 
-      description.includes('special illustration rare') ||
-      description.includes('special art') ||
-      description.includes('full art');
-    
+      description.includes('illustration rare')
+
     // Verifica il prezzo (le carte speciali tendono ad avere un prezzo più alto)
     // Le illustration rare solitamente hanno un prezzo più elevato rispetto alle comuni
     const hasHigherPrice = product.price.cents > 500; // 5 euro/dollari come soglia indicativa
