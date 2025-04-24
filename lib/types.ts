@@ -7,6 +7,7 @@ export interface Card {
   expansion: string;
   isCollected: boolean;
   dateCollected?: Date;
+  type?: string;
 }
 
 export interface Expansion {
