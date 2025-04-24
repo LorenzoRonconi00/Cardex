@@ -125,7 +125,7 @@ const ExpansionSelector: React.FC<ExpansionSelectorProps> = ({
   const currentStats = getCurrentStats();
 
   return (
-    <div ref={dropdownRef} className="relative w-full" style={{ zIndex: 10 }}>
+    <div ref={dropdownRef} className="relative w-full" style={{ zIndex: 15 }}>
       <button
         onClick={toggleDropdown}
         className="w-full h-16 flex flex-col items-center justify-center rounded-xl px-4 cursor-pointer border-4 border-[#1E2124] text-white transition-all duration-200 ease-in-out hover:bg-[#2F3136] bg-[#36393E]"

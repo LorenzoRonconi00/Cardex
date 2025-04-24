@@ -16,33 +16,48 @@ export interface WishlistItem {
 
 interface WishlistItemCardProps {
   item: WishlistItem;
-  onRemove: () => void;
+  onRemove: () => void;  // Questa funzione dovrebbe eliminare SOLO questa carta
+  isRemoving?: boolean;  // Indica se l'elemento è in fase di rimozione
 }
 
-const WishlistItemRow: React.FC<WishlistItemCardProps> = ({ item, onRemove }) => {
+const WishlistItemRow: React.FC<WishlistItemCardProps> = ({ 
+  item, 
+  onRemove, 
+  isRemoving = false 
+}) => {
   
   return (
     <div className="sm:flex items-center bg-[#1E2124] rounded-lg p-3 mb-3 shadow-md hover:bg-[#242729] transition-colors relative">
       {/* Bottone rimozione per mobile (in alto a destra) */}
       <button 
-        onClick={onRemove}
-        className="absolute top-2 right-2 sm:static w-8 h-8 sm:w-10 sm:h-10 bg-[#36393E] rounded-full flex items-center justify-center flex-shrink-0 hover:bg-red-500 transition-colors cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();  // Previeni la propagazione
+          onRemove();          // Chiama la funzione di rimozione per questa specifica carta
+        }}
+        disabled={isRemoving}
+        className={`absolute top-2 right-2 sm:static w-8 h-8 sm:w-10 sm:h-10 ${isRemoving ? 'bg-[#36393E]' : 'bg-[#36393E] hover:bg-red-500'} rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isRemoving ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         aria-label="Rimuovi dalla wishlist"
       >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4 sm:h-5 sm:w-5 text-white" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
-          />
-        </svg>
+        {isRemoving ? (
+          // Spinner di caricamento
+          <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+        ) : (
+          // Icona cestino
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-4 w-4 sm:h-5 sm:w-5 text-white" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+            />
+          </svg>
+        )}
       </button>
       
       {/* Layout per dispositivi mobili: immagine centrata */}

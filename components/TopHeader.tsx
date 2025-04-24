@@ -91,7 +91,8 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
         
         {/* User-specific Card Counter - only on desktop */}
         {sessionData?.user?.id && (
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center flex-row gap-x-2 space-x-2">
+            <p className='text-base text-white font-medium'>Carte totali:</p>
             <div className="bg-[#36393E] border-2 border-[#1E2124] rounded-lg px-3 py-1 text-sm">
               {isLoadingStats ? (
                 <span className="animate-pulse">Caricamento...</span>

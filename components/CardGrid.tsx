@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card } from '@/lib/types';
 import PokemonCard from './PokemonCard';
 import SaveButton from './SaveButton';
+import AddCardModal from './AddCardModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 
@@ -24,6 +25,8 @@ const CardGrid: React.FC<CardGridProps> = ({
   const queryClient = useQueryClient();
   const [cardsToUpdate, setCardsToUpdate] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch cards for the expansion directly from DB (optimized)
   const { data: cards, isLoading, error } = useQuery<Card[]>({
@@ -40,6 +43,19 @@ const CardGrid: React.FC<CardGridProps> = ({
     refetchOnMount: true,
     refetchOnWindowFocus: false, // Prevent excessive refetching
     enabled: status === 'authenticated' && !isGlobalSearch, // Solo se autenticato e non in modalità ricerca globale
+  });
+
+  // Fetch wishlist items to check if cards are already in wishlist
+  const { data: wishlistItems } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: async () => {
+      const response = await fetch('/api/wishlist');
+      if (!response.ok) {
+        throw new Error('Failed to fetch wishlist');
+      }
+      return response.json();
+    },
+    enabled: status === 'authenticated', // Solo se autenticato
   });
 
   // Mutation for updating selected cards
@@ -104,6 +120,35 @@ const CardGrid: React.FC<CardGridProps> = ({
     }
   });
 
+  // Add card to wishlist
+  const { mutate: addToWishlist, isPending: isAddingToWishlist } = useMutation({
+    mutationFn: async ({ card, price }: { card: Card, price: number }) => {
+      const response = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          card,
+          price,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add card to wishlist');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      // Close modal
+      setIsModalOpen(false);
+      setSelectedCard(null);
+    },
+  });
+
   // Handle toggling a card's collected status
   const handleToggleCollected = (id: string, isCollected: boolean) => {
     console.log(`Toggling card ${id} to ${isCollected ? 'collected' : 'uncollected'}`);
@@ -136,6 +181,12 @@ const CardGrid: React.FC<CardGridProps> = ({
     });
   };
 
+  // Handle adding a card to wishlist
+  const handleAddToWishlist = (card: Card) => {
+    setSelectedCard(card);
+    setIsModalOpen(true);
+  };
+
   // Save changes
   const handleSave = () => {
     console.log("Save button clicked", cardsToUpdate);
@@ -143,6 +194,14 @@ const CardGrid: React.FC<CardGridProps> = ({
     if (Object.keys(cardsToUpdate).length > 0) {
       updateCards(cardsToUpdate);
     }
+  };
+
+  // Check if a card is in the wishlist
+  const isCardInWishlist = (cardId: string) => {
+    if (!wishlistItems) return false;
+    return wishlistItems.some((item: any) => 
+      (item.card && item.card.id === cardId) || item.id === cardId
+    );
   };
 
   // Decide which cards to display: search results or normal expansion cards
@@ -247,18 +306,56 @@ const CardGrid: React.FC<CardGridProps> = ({
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-14 pb-6 px-md:px-12 lg:px-16 2xl:px-20">
+      {/* Se è attiva la ricerca globale, mostra un messaggio informativo */}
+      {isGlobalSearch && searchTerm && (
+        <div className="mb-6 px-4 py-3 bg-[#36393E] rounded-lg border-l-4 border-[#5865F2] text-white">
+          <div className="flex items-center">
+            <svg 
+              className="h-5 w-5 mr-2 text-[#5865F2]" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              />
+            </svg>
+            <span>
+              Risultati di ricerca per <strong>"{searchTerm}"</strong> in tutte le espansioni: {displayCards.length} carte trovate
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Grid con maggiore spaziatura per evitare sovrapposizioni durante l'hover */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-12 gap-y-20 pb-8 px-4 md:px-12 lg:px-16 2xl:px-20">
         {displayCards.map((card) => (
           <PokemonCard
             key={card.id}
             card={card}
             onToggleCollected={handleToggleCollected}
+            onAddToWishlist={() => handleAddToWishlist(card)}
+            isInWishlist={isCardInWishlist(card.id)}
           />
         ))}
       </div>
 
       {hasChanges && (
         <SaveButton onSave={handleSave} isSaving={isSaving} />
+      )}
+
+      {/* Modal per aggiungere carta alla wishlist */}
+      {isModalOpen && selectedCard && (
+        <AddCardModal
+          card={selectedCard}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={(price) => addToWishlist({ card: selectedCard, price })}
+          isLoading={isAddingToWishlist}
+        />
       )}
     </>
   );

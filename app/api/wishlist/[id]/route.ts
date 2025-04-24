@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-// DELETE - Rimuovi una carta dalla wishlist dell'utente corrente per ID
+// DELETE - Rimuovi una carta specifica dalla wishlist dell'utente corrente
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -46,7 +46,7 @@ export async function DELETE(
     
     await connectToDatabase();
     
-    // Rimuovi la carta dalla wishlist SOLO se appartiene all'utente corrente
+    // Rimuovi SOLO la carta specifica dalla wishlist dell'utente corrente
     const result = await WishlistItem.deleteOne({ 
       _id: new mongoose.Types.ObjectId(id),
       userId: userId  // Assicura che l'elemento appartenga all'utente

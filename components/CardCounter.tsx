@@ -60,7 +60,7 @@ const CardCounter: React.FC<CardCounterProps> = ({ expansion }) => {
 
   return (
     <div className="w-full h-16 bg-[#36393E] text-white border-4 border-[#1E2124] px-4 rounded-xl flex items-center justify-between" style={{boxShadow: '0 12px 15px -3px rgba(0, 0, 0, 0.4)'}}>
-      <span className="text-sm tracking-wider">In collezione:</span>
+      <span className="text-sm tracking-wider">Carte espansione:</span>
       <div className="flex flex-col items-end">
         <span className="bg-transparent border-2 border-[#1E2124] px-3 py-1 rounded-lg text-sm">
           {currentExpansionStats.collected}/{currentExpansionStats.total} carte
