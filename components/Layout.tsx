@@ -4,15 +4,17 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import TopHeader from './TopHeader';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface LayoutProps {
   children: ReactNode;
+  onSearch?: (searchTerm: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, onSearch }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -92,7 +94,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </svg>
             </button>
           </div>
-          <TopHeader session={session} />
+          <TopHeader session={session} onSearch={onSearch} />
         </div>
         
         {/* Page content with responsive padding */}
