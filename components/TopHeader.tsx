@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Session } from 'next-auth';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/lib/hooks';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 interface TopHeaderProps {
   session: Session | null;
@@ -24,7 +24,6 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { data: sessionData } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -85,10 +84,12 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
 
   return (
     <div className="bg-[#2C2F33] text-white py-4 px-4 md:px-6 flex justify-between items-center relative">
+      {/* Menu icon spacing on mobile */}
+      <div className="w-8 md:hidden"></div>
+      
       <div className="flex items-center space-x-6">
-        {/* Logo/Text on the left */}
         
-        {/* User-specific Card Counter */}
+        {/* User-specific Card Counter - only on desktop */}
         {sessionData?.user?.id && (
           <div className="hidden md:flex items-center space-x-2">
             <div className="bg-[#36393E] border-2 border-[#1E2124] rounded-lg px-3 py-1 text-sm">
@@ -106,7 +107,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
 
       {/* Search filter in the middle (only show on expansion pages) */}
       {isOnExpansionPage && (
-        <div className="flex-1 mx-4 max-w-md hidden md:block">
+        <div className="flex-1 mx-2 md:mx-4 max-w-[200px] md:max-w-md">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <svg 
@@ -127,7 +128,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
             </div>
             <input
               type="text"
-              className="w-full h-10 pl-10 pr-10 text-sm text-white border-2 border-[#1E2124] rounded-lg bg-[#36393E] placeholder-gray-400 focus:outline-none"
+              className="w-full h-8 md:h-10 pl-8 pr-8 md:pl-10 md:pr-10 text-xs md:text-sm text-white border-2 border-[#1E2124] rounded-lg bg-[#36393E] placeholder-gray-400 focus:outline-none"
               placeholder="Cerca nell'espansione..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -140,11 +141,11 @@ const TopHeader: React.FC<TopHeaderProps> = ({ session, onSearch }) => {
             {searchTerm.trim() !== '' && (
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3"
                 onClick={handleClearSearch}
               >
                 <svg
-                  className="w-4 h-4 text-gray-400 hover:text-white"
+                  className="w-3 h-3 md:w-4 md:h-4 text-gray-400 hover:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"

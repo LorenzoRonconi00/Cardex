@@ -40,7 +40,7 @@ export default function ExpansionPage() {
   // Find the current expansion from the list
   const currentExpansion = expansions?.find(exp => exp.slug === slug);
 
-  // Handle search callback from the header
+  // Handle search from header
   const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
@@ -63,7 +63,7 @@ export default function ExpansionPage() {
     <Layout onSearch={handleSearch}>
       <div className="px-2 sm:px-4 md:px-8 lg:px-12 py-2">
         {/* Filters and controls row - flex with flex-grow-0 for fixed widths */}
-        <div className="flex flex-col justify-end md:flex-row gap-6 mb-6 md:mb-10 lg:mb-16">
+        <div className="flex flex-col md:flex-row justify-between gap-6 mb-6 md:mb-10 lg:mb-16">
           {/* CardCounter - fixed width */}
           <div className="flex-grow-0 md:w-64 lg:w-80">
             <CardCounter expansion={slug} />
@@ -81,64 +81,6 @@ export default function ExpansionPage() {
                 currentExpansion={slug}
                 onChange={handleExpansionChange}
               />
-            )}
-          </div>
-        </div>
-
-        {/* Mobile search - Only visible on mobile devices when on expansion pages */}
-        <div className="mb-6 md:hidden">
-          <div className="relative w-full">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <svg 
-                className="w-5 h-5 text-gray-400" 
-                aria-hidden="true" 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 20 20"
-              >
-                <path 
-                  stroke="currentColor" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth="2" 
-                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                />
-              </svg>
-            </div>
-            <input
-              type="text"
-              className="w-full h-14 pl-12 pr-10 text-md text-white border-4 border-[#1E2124] rounded-xl bg-[#36393E] placeholder-gray-400 focus:outline-none"
-              placeholder="Cerca nell'espansione..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ 
-                WebkitAppearance: 'none',
-                MozAppearance: 'textfield',
-                boxShadow: '0 12px 15px -3px rgba(0, 0, 0, 0.4)'
-              }}
-            />
-            {searchTerm.trim() !== '' && (
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
-                onClick={() => setSearchTerm('')}
-              >
-                <svg
-                  className="w-4 h-4 text-gray-400 hover:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
             )}
           </div>
         </div>
