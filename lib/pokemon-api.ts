@@ -140,38 +140,3 @@ export async function fetchCardsByExpansion(expansionId: string): Promise<Card[]
     throw error;
   }
 }
-
-/**
- * Fetches a specific card by ID
- */
-export async function fetchCardById(cardId: string): Promise<Card | null> {
-  try {
-    const response = await api.get(`/cards/${cardId}`);
-    const card = response.data.data;
-    
-    return {
-      id: card.id,
-      name: card.name,
-      imageUrl: card.images.large,
-      expansion: card.set.id,
-      isCollected: false // Default value, will be updated from DB
-    };
-  } catch (error) {
-    console.error(`Error fetching card ${cardId}:`, error);
-    return null;
-  }
-}
-
-/**
- * Get the 13 most recent expansions with Alt Art cards
- */
-export async function getRecentExpansionsWithAltArt(): Promise<Expansion[]> {
-  try {
-    // Non utilizziamo più questa funzione nella nuova logica
-    // Torna una lista vuota
-    return [];
-  } catch (error) {
-    console.error('Error getting recent expansions with Alt Art:', error);
-    throw error;
-  }
-}
