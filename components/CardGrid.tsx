@@ -346,17 +346,6 @@ const CardGrid: React.FC<CardGridProps> = ({
       {hasChanges && (
         <SaveButton onSave={handleSave} isSaving={isSaving} />
       )}
-
-      {/* Modal per aggiungere carta alla wishlist */}
-      {isModalOpen && selectedCard && (
-        <AddCardModal
-          card={selectedCard}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={(price) => addToWishlist({ card: selectedCard, price })}
-          isLoading={isAddingToWishlist}
-        />
-      )}
     </>
   );
 };

@@ -10,12 +10,14 @@ import { useQueryClient } from '@tanstack/react-query';
 interface PokemonCardProps {
   card: Card;
   onToggleCollected: (id: string, isCollected: boolean) => void;
+  onAddToWishlist?: () => void; // Aggiunta questa proprietà opzionale
   isInWishlist?: boolean;
 }
 
 const PokemonCard: React.FC<PokemonCardProps> = ({ 
   card, 
   onToggleCollected,
+  // onAddToWishlist, // Commentato per evitare modifiche alla logica esistente
   isInWishlist = false
 }) => {
   const [isSearching, setIsSearching] = useState(false);
@@ -188,7 +190,7 @@ const PokemonCard: React.FC<PokemonCardProps> = ({
 
         {/* Wishlist button in top right (heart icon) */}
         <div
-          className="absolute -top-2.5 -right-2.5 z-10 w-10 h-10 rounded-md bg-[#36393E] border border-gray-700 flex items-center justify-center shadow-md hover:bg-[#4a4e57] transition-colors"
+          className="absolute -top-2.5 -right-2.5 z-10 w-10 h-10 rounded-md bg-[#36393E] border border-gray-700 flex items-center justify-center shadow-md hover:bg-[#4a4e57] transition-colors cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             handleAddToWishlist();

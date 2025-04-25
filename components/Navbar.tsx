@@ -12,29 +12,28 @@ const Navbar: React.FC = () => {
   const [indicatorPosition, setIndicatorPosition] = useState<number>(0);
   const [isInitialMount, setIsInitialMount] = useState(true);
 
-  // Fetch wishlist items count
+  // Recupero numero di elementi nella wishlist
   const { data: wishlistItems } = useQuery({
     queryKey: ['wishlist'],
     queryFn: async () => {
       const response = await fetch('/api/wishlist');
       if (!response.ok) {
-        throw new Error('Failed to fetch wishlist');
+        throw new Error('Impossibile recuperare gli elementi della wishlist');
       }
       return response.json();
     },
-    // Non bloccare il rendering se la query fallisce
-    staleTime: 60000, // 1 minuto
+    staleTime: 60000,
   });
 
   // Numero di elementi nella wishlist
   const wishlistCount = wishlistItems?.length || 0;
 
-  // Formatta il conteggio per il badge (99+ se superiore a 99)
+  // Formatto il conteggio per il badge (99+ se superiore a 99)
   const formattedCount = wishlistCount > 99 ? '99+' : wishlistCount.toString();
 
-  // Calcola la posizione dell'indicatore in base alla rotta attiva
+  // Calcolo posizione indicatore
   useEffect(() => {
-    // Determina la posizione iniziale senza animazione
+    // Determino posizione iniziale dell'indicatore
     if (isInitialMount) {
       if (pathname.includes('/wishlist')) {
         setActiveRoute('/wishlist');
@@ -43,10 +42,9 @@ const Navbar: React.FC = () => {
         setActiveRoute('/');
         setIndicatorPosition(0);
       }
-      // Dopo l'inizializzazione, imposta isInitialMount a false
       setTimeout(() => setIsInitialMount(false), 50);
     } else {
-      // Aggiorna normalmente dopo il mount iniziale
+      // Aggiorno dopo mount iniziale
       if (pathname.includes('/wishlist')) {
         setActiveRoute('/wishlist');
         setIndicatorPosition(1);
@@ -58,7 +56,6 @@ const Navbar: React.FC = () => {
   }, [pathname, isInitialMount]);
 
   const navigateTo = (route: string, position: number) => {
-    // Se siamo già su questa rotta, non fare nulla
     if (activeRoute === route) return;
     
     setActiveRoute(route);
@@ -83,13 +80,13 @@ const Navbar: React.FC = () => {
         />
       </div>
       
-      {/* Navigation items container */}
+      {/* Oggetti di navigazione */}
       <div className="relative flex flex-col items-center space-y-3 w-full">
-        {/* Active indicator - posizionato a sinistra della navbar con animazione */}
+        {/* Indicatore di posizione */}
         <div 
           className={`absolute left-0 w-3 h-3 ${isInitialMount ? '' : 'transition-all duration-300'}`}
           style={{ 
-            top: `${20 + indicatorPosition * 56}px`, // 56px = dimensione bottone (48px) + spaziatura (8px)
+            top: `${20 + indicatorPosition * 56}px`,
           }}
         >
           <div className="w-0 h-0 
@@ -99,7 +96,7 @@ const Navbar: React.FC = () => {
           </div>
         </div>
         
-        {/* Cards list button */}
+        {/* Bottone Card List */}
         <div 
           className={`w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shadow-lg transition-all
             ${activeRoute === '/' ? 'bg-[#36393E]' : 'bg-[#36393E]/70 hover:bg-[#36393E]/90'}`}
@@ -114,7 +111,7 @@ const Navbar: React.FC = () => {
           />
         </div>
         
-        {/* Wishlist button con badge counter */}
+        {/* Bottone Wishlist */}
         <div 
           className={`w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shadow-lg transition-all relative
             ${activeRoute === '/wishlist' ? 'bg-[#36393E]' : 'bg-[#36393E]/70 hover:bg-[#36393E]/90'}`}
@@ -128,7 +125,7 @@ const Navbar: React.FC = () => {
             style={{ width: 'auto', height: 'auto', maxWidth: '22px', maxHeight: '22px' }}
           />
           
-          {/* Badge counter - mostra solo se ci sono elementi nella wishlist */}
+          {/* Badge counter */}
           {wishlistCount > 0 && (
             <div className="absolute -top-1 -right-1 bg-yellow-400 text-black rounded-full flex items-center justify-center">
               <span className={`
@@ -142,7 +139,7 @@ const Navbar: React.FC = () => {
         </div>
       </div>
       
-      {/* Logout button - positioned at bottom */}
+      {/* Bottone Logout - TODO: Al momento non esegue nulla */}
       <div 
         className="w-12 h-12 bg-[#36393E]/70 hover:bg-[#36393E]/90 rounded-xl flex items-center justify-center cursor-pointer shadow-lg mt-auto mb-6 transition-all"
         onClick={() => {}}
