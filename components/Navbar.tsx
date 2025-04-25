@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useQuery } from '@tanstack/react-query';
 
 const Navbar: React.FC = () => {
   const router = useRouter();
@@ -10,6 +11,26 @@ const Navbar: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<string>('/');
   const [indicatorPosition, setIndicatorPosition] = useState<number>(0);
   const [isInitialMount, setIsInitialMount] = useState(true);
+
+  // Fetch wishlist items count
+  const { data: wishlistItems } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: async () => {
+      const response = await fetch('/api/wishlist');
+      if (!response.ok) {
+        throw new Error('Failed to fetch wishlist');
+      }
+      return response.json();
+    },
+    // Non bloccare il rendering se la query fallisce
+    staleTime: 60000, // 1 minuto
+  });
+
+  // Numero di elementi nella wishlist
+  const wishlistCount = wishlistItems?.length || 0;
+
+  // Formatta il conteggio per il badge (99+ se superiore a 99)
+  const formattedCount = wishlistCount > 99 ? '99+' : wishlistCount.toString();
 
   // Calcola la posizione dell'indicatore in base alla rotta attiva
   useEffect(() => {
@@ -93,19 +114,31 @@ const Navbar: React.FC = () => {
           />
         </div>
         
-        {/* Wishlist button */}
+        {/* Wishlist button con badge counter */}
         <div 
-          className={`w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shadow-lg transition-all
+          className={`w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shadow-lg transition-all relative
             ${activeRoute === '/wishlist' ? 'bg-[#36393E]' : 'bg-[#36393E]/70 hover:bg-[#36393E]/90'}`}
           onClick={() => navigateTo('/wishlist', 1)}
         >
           <Image
             src="/images/wishlist.svg"
             alt="Wishlist"
-            width={28}
-            height={28}
-            style={{ width: 'auto', height: 'auto', maxWidth: '28px', maxHeight: '28px' }}
+            width={22}
+            height={22}
+            style={{ width: 'auto', height: 'auto', maxWidth: '22px', maxHeight: '22px' }}
           />
+          
+          {/* Badge counter - mostra solo se ci sono elementi nella wishlist */}
+          {wishlistCount > 0 && (
+            <div className="absolute -top-1 -right-1 bg-yellow-400 text-black rounded-full flex items-center justify-center">
+              <span className={`
+                ${formattedCount.length > 2 ? 'text-xs px-1' : 'text-xs px-1.5'} 
+                py-0.5 min-w-5 h-5 flex items-center justify-center font-medium
+              `}>
+                {formattedCount}
+              </span>
+            </div>
+          )}
         </div>
       </div>
       
