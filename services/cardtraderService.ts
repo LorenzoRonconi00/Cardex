@@ -90,8 +90,10 @@ export interface CardTraderProduct {
 type CardTraderProductsResponse = Record<string, CardTraderProduct[]>;
 
 export class CardTraderService {
-  private static readonly API_BASE_URL = 'https://api.cardtrader.com/api/v2';
-  private static readonly AUTH_TOKEN = 'eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJjYXJkdHJhZGVyLXByb2R1Y3Rpb24iLCJzdWIiOiJhcHA6MTQ4NjIiLCJhdWQiOiJhcHA6MTQ4NjIiLCJleHAiOjQ5MDExOTkwMzYsImp0aSI6IjMzMjRjOGJhLWQ0YmUtNDdlYS05NmMzLTJiODRjZDdiNGNiNSIsImlhdCI6MTc0NTUyNTQzNiwibmFtZSI6IkZyYW5rMzAgQXBwIDIwMjUwNDEzMTM0MTUzIn0.SnlfnwnZN5zwTFwlfqHCHdkBgXZ76j9-_vAmZ1kc0R4D2qlG4w9h7vO8nB6o3WqjhH3UVG563V3dUpIqC3A7MuKnctkjQXfFTnQoFraFY0KhHqMC3Ao5kAN6QOBe_t9_cPvCS17Elv7CBjATT_R7P8ZBPKjNg8S2nrfTAqGPfy5Q636Ic6dMhhtoEQdZBsuXCFujlAYRG5uMSOHuuvh0N8k6tyLhaH7AOq8sH3yewKOAXjsUVkLLv6DAQMc7pAFi9fEZQspEvyDRbITFxwr-5m-8ftTNS_WHaGQWyaIIASCB3x_BcBDQOIhKGXTGGcY2OXPX5fjO0uGGJ0VR1fGYHA';
+
+
+  private static readonly API_BASE_URL = process.env.CARDTRADER_API_BASE_URL;
+  private static readonly AUTH_TOKEN = process.env.CARDTRADER_AUTH_TOKEN;
 
   /**
    * Esegue una chiamata autenticata all'API di CardTrader
