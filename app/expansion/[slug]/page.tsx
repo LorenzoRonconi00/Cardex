@@ -100,7 +100,7 @@ export default function ExpansionPage() {
     <Layout onSearch={handleSearch}>
       <div className="px-2 sm:px-4 md:px-8 lg:px-12 py-2">
         {/* Filters and controls row - flex with flex-grow-0 for fixed widths */}
-        <div className="flex flex-col md:flex-row justify-between gap-6 mb-6 md:mb-10 lg:mb-16">
+        <div className="flex flex-col md:flex-row justify-between gap-6 mb-12 md:mb-10 lg:mb-16">
           {/* CardCounter - fixed width */}
           <div className="flex-grow-0 md:w-64 lg:w-80">
             <CardCounter expansion={slug} />

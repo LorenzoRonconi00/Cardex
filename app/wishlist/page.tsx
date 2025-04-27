@@ -146,7 +146,7 @@ export default function WishlistPage() {
   return (
     <Layout>
       <div className="px-6 py-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-10 md:mb-14">
           <h1 className="text-2xl font-bold text-white">Wishlist</h1>
           
           {/* Pulsante "Rimuovi Tutto" - mostrato solo se ci sono elementi */}

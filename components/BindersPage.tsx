@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Binder } from '@/lib/types';
 
@@ -108,11 +108,24 @@ const BinderCard: React.FC<{
   onDelete?: (id: string) => void;
 }> = ({ binder, onDelete }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const router = useRouter();
+  
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking the delete button
+    if (e.target instanceof Element && 
+        (e.target.closest('button') || e.target.tagName === 'BUTTON' || e.target.tagName === 'svg' || e.target.tagName === 'path')) {
+      return;
+    }
+    
+    // Navigate to the binder detail page
+    router.push(`/binders/${binder.id}`);
+  };
   
   return (
     <div className="relative group">
       <div 
-        className={`bg-[#2F3136] rounded-lg p-4 flex flex-col items-center transition-all hover:transform hover:scale-105 hover:shadow-lg`}
+        onClick={handleCardClick}
+        className={`bg-[#2F3136] rounded-lg p-4 flex flex-col items-center transition-all hover:transform hover:scale-105 hover:shadow-lg cursor-pointer`}
       >
         {/* Binder Image */}
         <div 
@@ -135,7 +148,10 @@ const BinderCard: React.FC<{
         {/* Delete button (visible on hover) */}
         {onDelete && (
           <button
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteConfirm(true);
+            }}
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1 transition-opacity"
             aria-label="Delete binder"
           >
@@ -272,7 +288,7 @@ const BindersPage: React.FC = () => {
   
   return (
     <Layout>
-      <div className="container mx-auto py-6">
+      <div className="container px-6 py-6">
         <h1 className="text-2xl font-bold text-white mb-6">I tuoi Binder</h1>
         
         {isLoading ? (

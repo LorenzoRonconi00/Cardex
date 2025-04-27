@@ -98,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onSearch }) => {
         </div>
         
         {/* Page content with responsive padding */}
-        <main className="flex-1 bg-[#282B30] overflow-y-auto pt-16 md:pt-18 mt-16 md:mt-18 px-2 md:px-6">
+        <main className="flex-1 bg-[#282B30] overflow-y-auto pt-12 md:pt-14 mt-16 md:mt-18 px-2 md:px-6">
           {children}
         </main>
       </div>
