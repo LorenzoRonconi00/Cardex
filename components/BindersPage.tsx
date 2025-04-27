@@ -25,7 +25,6 @@ const CreateBinderModal: React.FC<{
     { name: 'purple', value: '#9333EA' },    // purple-600
     { name: 'pink', value: '#EC4899' },      // pink-500
     { name: 'orange', value: '#F97316' },    // orange-500
-    { name: 'teal', value: '#0D9488' },      // teal-600
     { name: 'cyan', value: '#0891B2' },      // cyan-600
     { name: 'indigo', value: '#4F46E5' },    // indigo-600
     { name: 'black', value: '#111827' },     // gray-900
