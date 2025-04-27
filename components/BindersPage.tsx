@@ -274,7 +274,7 @@ const BindersPage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto py-6">
-        <h1 className="text-2xl font-bold text-white mb-6">I tuoi raccoglitori</h1>
+        <h1 className="text-2xl font-bold text-white mb-6">I tuoi Binder</h1>
         
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -282,7 +282,7 @@ const BindersPage: React.FC = () => {
           </div>
         ) : isError ? (
           <div className="bg-red-500 bg-opacity-20 border border-red-500 text-red-100 px-4 py-3 rounded">
-            Errore nel caricamento dei raccoglitori. Riprova più tardi.
+            Errore nel caricamento dei Binder. Riprova più tardi.
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
