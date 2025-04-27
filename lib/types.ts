@@ -120,6 +120,14 @@ export interface PokemonTCGSet {
   };
 }
 
+export interface Binder {
+  id: string;
+  name: string;
+  color: string;
+  userId: string;
+  createdAt?: Date;
+}
+
 // Filter options for Alt Art cards
 export const ALT_ART_IDENTIFIERS = [
   'Alternate Art', 

@@ -38,6 +38,9 @@ const Navbar: React.FC = () => {
       if (pathname.includes('/wishlist')) {
         setActiveRoute('/wishlist');
         setIndicatorPosition(1);
+      } else if (pathname.includes('/binders')) {
+        setActiveRoute('/binders');
+        setIndicatorPosition(2);
       } else {
         setActiveRoute('/');
         setIndicatorPosition(0);
@@ -48,6 +51,9 @@ const Navbar: React.FC = () => {
       if (pathname.includes('/wishlist')) {
         setActiveRoute('/wishlist');
         setIndicatorPosition(1);
+      } else if (pathname.includes('/binders')) {
+        setActiveRoute('/binders');
+        setIndicatorPosition(2);
       } else {
         setActiveRoute('/');
         setIndicatorPosition(0);
@@ -136,6 +142,21 @@ const Navbar: React.FC = () => {
               </span>
             </div>
           )}
+        </div>
+
+        {/* Bottone Binders */}
+        <div 
+          className={`w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shadow-lg transition-all
+            ${activeRoute === '/binders' ? 'bg-[#36393E]' : 'bg-[#36393E]/70 hover:bg-[#36393E]/90'}`}
+          onClick={() => navigateTo('/binders', 2)}
+        >
+          <Image
+            src="/images/binder.svg"
+            alt="Binders"
+            width={24}
+            height={24}
+            style={{ width: 'auto', height: 'auto', maxWidth: '24px', maxHeight: '24px' }}
+          />
         </div>
       </div>
       

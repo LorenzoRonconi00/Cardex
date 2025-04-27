@@ -159,10 +159,35 @@ const userSchema = new mongoose.Schema({
   ],
 });
 
+// Binder Schema
+const binderSchema = new mongoose.Schema({
+  name: { 
+    type: String, 
+    required: true 
+  },
+  color: { 
+    type: String, 
+    required: true,
+    default: 'red' 
+  },
+  userId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+binderSchema.index({ userId: 1, name: 1 }, { unique: true });
+
 // Controlla se il modello esiste già prima di crearlo (evita errori in hot-reload)
 export const Card = mongoose.models.Card || mongoose.model('Card', cardSchema);
 export const Expansion = mongoose.models.Expansion || mongoose.model('Expansion', expansionSchema);
 export const WishlistItem = mongoose.models.WishlistItem || mongoose.model('WishlistItem', wishlistItemSchema);
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
+export const Binder = mongoose.models.Binder || mongoose.model('Binder', binderSchema);
 
 export default connectToDatabase;
