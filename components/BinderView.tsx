@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import { useParams, useRouter } from 'next/navigation';
 import HTMLFlipBook from 'react-pageflip';
+import BinderSlot from './BinderSlot';
+import CardSelectionModal from './CardSelectionModal';
+import { Card } from '@/lib/types';
+import CardPreviewModal from './CardPreviewModal';
 
 // Definizione delle props per le pagine
 type PageProps = {
@@ -20,7 +24,147 @@ type CoverProps = {
 // Componente per le pagine standard del raccoglitore
 const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
     const { pageNumber, startingSlot } = props;
-
+    const params = useParams();
+    const binderId = params.id as string;
+    
+    // State per lo slot selezionato e i modal
+    const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [previewCard, setPreviewCard] = useState<Card | null>(null);
+    const [previewSlot, setPreviewSlot] = useState<number | null>(null);
+    
+    // State per le carte nei slot e le animazioni
+    const [slotCards, setSlotCards] = useState<{[slotNumber: number]: Card | null}>({});
+    const [newlyAddedSlots, setNewlyAddedSlots] = useState<Set<number>>(new Set());
+    
+    // Query per caricare i dati degli slot
+    const { data: binderSlotsData, isLoading: isLoadingSlots, refetch: refetchSlots } = useQuery({
+        queryKey: ['binderSlots', binderId],
+        queryFn: async () => {
+            const response = await fetch(`/api/binders/${binderId}/slots`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch binder slots');
+            }
+            const result = await response.json();
+            return result.success ? result.data : [];
+        },
+        enabled: !!binderId // Esegui solo se binderId esiste
+    });
+    
+    // Aggiorna lo state delle carte negli slot quando i dati vengono caricati
+    useEffect(() => {
+        if (binderSlotsData && Array.isArray(binderSlotsData)) {
+            const newSlotCards: {[slotNumber: number]: Card | null} = {};
+            binderSlotsData.forEach((slot: any) => {
+                if (slot.slotNumber && slot.card) {
+                    newSlotCards[slot.slotNumber] = slot.card;
+                }
+            });
+            setSlotCards(newSlotCards);
+        }
+    }, [binderSlotsData]);
+    
+    // Ottieni gli ID delle carte già inserite nel binder
+    const existingCardIds = useMemo(() => {
+        return Object.values(slotCards)
+            .filter(card => card !== null)
+            .map(card => card!.id);
+    }, [slotCards]);
+    
+    // Gestisce il click su uno slot vuoto per aprire il modal di selezione
+    const handleSlotClick = (slotNumber: number) => {
+        setSelectedSlot(slotNumber);
+        setIsModalOpen(true);
+    };
+    
+    // Gestisce il click su una carta inserita per aprire la preview
+    const handleCardPreview = (card: Card, slotNumber: number) => {
+        setPreviewCard(card);
+        setPreviewSlot(slotNumber);
+    };
+    
+    // Gestisce la selezione di una carta dal modal
+    const handleCardSelect = async (card: Card) => {
+        if (selectedSlot === null) return;
+        
+        try {
+            // Invia la richiesta API per aggiungere la carta allo slot
+            const response = await fetch(`/api/binders/${binderId}/slots`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    slotNumber: selectedSlot,
+                    cardId: card.id
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to add card to slot');
+            }
+            
+            // Aggiorna lo state locale
+            setSlotCards(prev => ({
+                ...prev,
+                [selectedSlot]: card
+            }));
+            
+            // Marca questo slot come appena aggiunto per l'animazione
+            setNewlyAddedSlots(prev => new Set(prev).add(selectedSlot));
+            
+            // Imposta un timer per rimuovere il flag di "appena aggiunto" dopo l'animazione
+            setTimeout(() => {
+                setNewlyAddedSlots(prev => {
+                    const updated = new Set(prev);
+                    updated.delete(selectedSlot);
+                    return updated;
+                });
+            }, 1000); // Durata dell'animazione + un piccolo margine
+            
+            // Chiude il modal
+            setIsModalOpen(false);
+            setSelectedSlot(null);
+            
+            // Ricarica i dati degli slot
+            refetchSlots();
+            
+        } catch (error) {
+            console.error('Error adding card to slot:', error);
+            
+            // Chiude il modal anche in caso di errore
+            setIsModalOpen(false);
+            setSelectedSlot(null);
+        }
+    };
+    
+    // Gestisce la rimozione di una carta da uno slot
+    const handleRemoveCard = async (slotNumber: number) => {
+        try {
+            // Invia la richiesta API per rimuovere la carta dallo slot
+            const response = await fetch(`/api/binders/${binderId}/slots/${slotNumber}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to remove card from slot');
+            }
+            
+            // Aggiorna lo state locale
+            setSlotCards(prev => {
+                const newState = { ...prev };
+                delete newState[slotNumber];
+                return newState;
+            });
+            
+            // Ricarica i dati degli slot
+            refetchSlots();
+            
+        } catch (error) {
+            console.error('Error removing card from slot:', error);
+        }
+    };
+    
     return (
         <div ref={ref} className="binder-page h-full w-full bg-[#1a1a1a]">
             <div className="h-full w-full p-6">
@@ -29,18 +173,14 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     {Array(12).fill(0).map((_, index) => {
                         const slotNumber = startingSlot + index;
                         return (
-                            <div
+                            <BinderSlot
                                 key={index}
-                                className="pocket relative bg-[#222222] rounded border border-dashed border-[#444444] flex items-center justify-center w-full h-full"
-                                style={{
-                                    boxShadow: "inset 0 0 10px rgba(0,0,0,0.5)"
-                                }}
-                            >
-                                {/* Area per la carta con numero dello slot centrato */}
-                                <div className="card-placeholder absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#555555] text-xs">
-                                    {`Slot ${slotNumber}`}
-                                </div>
-                            </div>
+                                slotNumber={slotNumber}
+                                card={slotCards[slotNumber] || null}
+                                onSlotClick={handleSlotClick}
+                                onCardPreview={handleCardPreview}
+                                isNewlyAdded={newlyAddedSlots.has(slotNumber)}
+                            />
                         );
                     })}
                 </div>
@@ -50,9 +190,38 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     {pageNumber}
                 </div>
             </div>
+            
+            {/* Card Selection Modal */}
+            {isModalOpen && selectedSlot !== null && (
+                <CardSelectionModal
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedSlot(null);
+                    }}
+                    onSelectCard={handleCardSelect}
+                    slotNumber={selectedSlot}
+                    existingCardIds={existingCardIds}
+                />
+            )}
+            
+            {/* Card Preview Modal */}
+            {previewCard && previewSlot !== null && (
+                <CardPreviewModal
+                    isOpen={!!previewCard}
+                    onClose={() => {
+                        setPreviewCard(null);
+                        setPreviewSlot(null);
+                    }}
+                    card={previewCard}
+                    slotNumber={previewSlot}
+                    onRemoveCard={handleRemoveCard}
+                />
+            )}
         </div>
     );
 });
+
 
 BinderPage.displayName = 'BinderPage';
 
@@ -348,8 +517,8 @@ const BinderView: React.FC = () => {
                                 onClick={goToPrevPage}
                                 disabled={currentPage === 0}
                                 className={`nav-button flex items-center justify-center w-12 h-12 rounded-full ${currentPage === 0
-                                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                        : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
+                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
                                     }`}
                                 aria-label="Pagina precedente"
                             >
@@ -373,8 +542,8 @@ const BinderView: React.FC = () => {
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages - 1}
                                 className={`nav-button flex items-center justify-center w-12 h-12 rounded-full ${currentPage === totalPages - 1
-                                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                        : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
+                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
                                     }`}
                                 aria-label="Pagina successiva"
                             >
@@ -468,6 +637,80 @@ const BinderView: React.FC = () => {
           border-radius: 12px;
           font-weight: 500;
         }
+
+        @keyframes card-enter {
+  0% {
+    transform: translateY(-30px) scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(5px) scale(1.05);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.5s ease forwards;
+}
+
+/* Il resto degli stili rimane invariato */
+.pocket {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pocket:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+
+.pocket-filled {
+  background-color: #1a1a1a;
+}
+
+.pocket-filled:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.card-container {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Migliora l'aspetto del modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #2A2D31;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  z-index: 60;
+  overflow: hidden;
+}
+
+/* Stile per placeholder delle tasche vuote */
+.card-placeholder {
+  font-weight: 500;
+  opacity: 0.6;
+  letter-spacing: 0.05em;
+}
       `}</style>
         </Layout>
     );

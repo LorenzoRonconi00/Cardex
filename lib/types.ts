@@ -128,6 +128,22 @@ export interface Binder {
   createdAt?: Date;
 }
 
+export interface BinderSlotData {
+  _id?: string;
+  binderId: string;
+  slotNumber: number;
+  cardId: string;
+  userId: string;
+  addedAt?: Date;
+  card?: Card;
+}
+
+export interface BinderSlotsResponse {
+  success: boolean;
+  data?: BinderSlotData[];
+  error?: string;
+}
+
 // Filter options for Alt Art cards
 export const ALT_ART_IDENTIFIERS = [
   'Alternate Art', 
