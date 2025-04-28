@@ -172,6 +172,7 @@ const BinderView: React.FC = () => {
     const page3Ref = useRef<HTMLDivElement>(null);
     const page4Ref = useRef<HTMLDivElement>(null);
     const page5Ref = useRef<HTMLDivElement>(null);
+    const page6Ref = useRef<HTMLDivElement>(null);
     const backCoverRef = useRef<HTMLDivElement>(null);
 
     // Aggiorna le dimensioni in base alla larghezza della finestra
@@ -335,6 +336,7 @@ const BinderView: React.FC = () => {
                             <BinderPage ref={page3Ref} pageNumber={3} startingSlot={25} />
                             <BinderPage ref={page4Ref} pageNumber={4} startingSlot={37} />
                             <BinderPage ref={page5Ref} pageNumber={5} startingSlot={49} />
+                            <BinderPage ref={page6Ref} pageNumber={6} startingSlot={61} />
 
                             {/* Retrocopertina */}
                             <BackCoverPage ref={backCoverRef} color={binder.color} />
