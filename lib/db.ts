@@ -1,3 +1,5 @@
+//lib/db.ts
+
 import mongoose from 'mongoose';
 
 // Definizione dell'interfaccia per la cache di mongoose
