@@ -13,21 +13,21 @@ const CreateBinderModal: React.FC<{
   onSave: (name: string, color: string) => void;
 }> = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#DC2626'); // red-600 hex value
+  const [color, setColor] = useState('#ec6246'); // default to Charizard color
   const [error, setError] = useState('');
 
   // Available color options using hex values directly
-  const colorOptions = [
-    { name: 'red', value: '#DC2626' },       // red-600
-    { name: 'blue', value: '#2563EB' },      // blue-600
-    { name: 'green', value: '#16A34A' },     // green-600
-    { name: 'yellow', value: '#EAB308' },    // yellow-500
-    { name: 'purple', value: '#9333EA' },    // purple-600
-    { name: 'pink', value: '#EC4899' },      // pink-500
-    { name: 'orange', value: '#F97316' },    // orange-500
-    { name: 'cyan', value: '#0891B2' },      // cyan-600
-    { name: 'indigo', value: '#4F46E5' },    // indigo-600
-    { name: 'black', value: '#111827' },     // gray-900
+  const pokemonOptions = [
+    { name: 'charizard', image: 'charizard_logo_template.png', value: '#ec6246' },
+    { name: 'blastoise', image: 'blastoise_logo_template.png', value: '#1d5ea4' },
+    { name: 'venusaur', image: 'venusaur_logo_template.png', value: '#58a7a2' },
+    { name: 'pikachu', image: 'pikachu_logo_template.png', value: '#f4ae01' },
+    { name: 'gengar', image: 'gengar_logo_template.png', value: '#bb77ff' },
+    { name: 'umbreon', image: 'umbreon_logo_template.png', value: '#3d6584' },
+    { name: 'snorlax', image: 'snorlax_logo_template.png', value: '#ecdfcf' },
+    { name: 'dragonite', image: 'dragonite_logo_template.png', value: '#f9be00' },
+    { name: 'lugia', image: 'lugia_logo_template.png', value: '#d9dcef' },
+    { name: 'ho-oh', image: 'ho-oh_logo_template.png', value: '#e54b33' },
   ];
 
   const handleSubmit = () => {
@@ -35,10 +35,10 @@ const CreateBinderModal: React.FC<{
       setError('Il nome è obbligatorio');
       return;
     }
-    
+
     onSave(name, color);
     setName('');
-    setColor('#DC2626');
+    setColor('#ec6246'); // reset to Charizard color
     setError('');
   };
 
@@ -47,16 +47,16 @@ const CreateBinderModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
       <div className="bg-[#36393E] rounded-lg w-full max-w-md p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-white mb-4">Crea nuovo raccoglitore</h2>
-        
+        <h2 className="text-xl font-bold text-white mb-4">Crea Binder</h2>
+
         {error && (
           <div className="bg-red-500 bg-opacity-20 border border-red-500 text-red-100 px-4 py-2 rounded mb-4">
             {error}
           </div>
         )}
-        
+
         <div className="mb-4">
-          <label className="block text-gray-300 mb-2">Nome raccoglitore</label>
+          <label className="block text-gray-300 mb-2">Nome</label>
           <input
             type="text"
             value={name}
@@ -65,24 +65,31 @@ const CreateBinderModal: React.FC<{
             placeholder="Inserisci un nome..."
           />
         </div>
-        
+
         <div className="mb-6">
-          <label className="block text-gray-300 mb-2">Colore</label>
-          <div className="flex flex-wrap gap-2">
-            {colorOptions.map((option) => (
+          <label className="block text-gray-300 mb-2">Tema</label>
+          <div className="grid grid-cols-5 gap-3">
+            {pokemonOptions.map((option) => (
               <button
                 key={option.name}
                 onClick={() => setColor(option.value)}
-                className={`w-8 h-8 rounded-full ${
-                  color === option.value ? 'ring-2 ring-white ring-offset-2 ring-offset-[#36393E]' : ''
-                }`}
+                className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${color === option.value
+                    ? 'border-white shadow-lg transform scale-105'
+                    : 'border-transparent hover:border-gray-400'
+                  }`}
                 style={{ backgroundColor: option.value }}
                 aria-label={`Color ${option.name}`}
-              />
+              >
+                <img
+                  src={`/images/pokemon_palettes/${option.image}`}
+                  alt={option.name}
+                  className="w-full h-full object-contain p-1"
+                />
+              </button>
             ))}
           </div>
         </div>
-        
+
         <div className="flex justify-end space-x-3">
           <button
             onClick={onClose}
@@ -110,6 +117,24 @@ const BinderCard: React.FC<{
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const router = useRouter();
   
+  // Pokemon palette mapping to find the correct logo
+  const getPokermonLogo = (color: string) => {
+    const colorToPokemon: { [key: string]: string } = {
+      '#ec6246': 'charizard_logo_template.png',
+      '#1d5ea4': 'blastoise_logo_template.png',
+      '#58a7a2': 'venusaur_logo_template.png',
+      '#f4ae01': 'pikachu_logo_template.png',
+      '#bb77ff': 'gengar_logo_template.png',
+      '#3d6584': 'umbreon_logo_template.png',
+      '#ecdfcf': 'snorlax_logo_template.png',
+      '#f9be00': 'dragonite_logo_template.png',
+      '#d9dcef': 'lugia_logo_template.png',
+      '#e54b33': 'ho-oh_logo_template.png',
+    };
+    
+    return colorToPokemon[color] || 'charizard_logo_template.png'; // default to Charizard
+  };
+  
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent navigation if clicking the delete button
     if (e.target instanceof Element && 
@@ -127,16 +152,28 @@ const BinderCard: React.FC<{
         onClick={handleCardClick}
         className={`bg-[#2F3136] rounded-lg p-4 flex flex-col items-center transition-all hover:transform hover:scale-105 hover:shadow-lg cursor-pointer`}
       >
-        {/* Binder Image */}
+        {/* Binder Image with Pokemon Logo */}
         <div 
-          className="w-32 h-40 mb-2 rounded-md flex items-center justify-center"
+          className="w-32 h-40 mb-2 rounded-md relative"
           style={{ backgroundColor: binder.color }}
         >
-          <div className="w-20 h-28 bg-white bg-opacity-10 rounded">
-            {/* This can be replaced with an actual binder image if available */}
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-3xl font-bold text-white opacity-30">📚</span>
-            </div>
+          {/* Binder rings on the left */}
+          <div className="absolute left-1 top-4 bottom-4 w-1 flex flex-col justify-evenly">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div 
+                key={i} 
+                className="w-3 h-3 rounded-full bg-white bg-opacity-30 -ml-1"
+              />
+            ))}
+          </div>
+          
+          {/* Pokemon logo in the center */}
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <img
+              src={`/images/pokemon_palettes/${getPokermonLogo(binder.color)}`}
+              alt="Pokemon logo"
+              className="w-20 h-20 object-contain"
+            />
           </div>
         </div>
         
@@ -201,7 +238,7 @@ const NewBinderCard: React.FC<{
   onClick: () => void;
 }> = ({ onClick }) => {
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-[#2F3136] rounded-lg p-4 flex flex-col items-center justify-center h-full cursor-pointer transition-all hover:bg-[#36393E] hover:shadow-lg"
       style={{ minHeight: '176px' }} // Match the height of regular binder cards
@@ -220,7 +257,7 @@ const NewBinderCard: React.FC<{
 const BindersPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const queryClient = useQueryClient();
-  
+
   // Fetch binders
   const { data: binders, isLoading, isError } = useQuery({
     queryKey: ['binders'],
@@ -233,7 +270,7 @@ const BindersPage: React.FC = () => {
       return data.data;
     }
   });
-  
+
   // Create binder mutation
   const createBinderMutation = useMutation({
     mutationFn: async (binderData: { name: string; color: string }) => {
@@ -244,12 +281,12 @@ const BindersPage: React.FC = () => {
         },
         body: JSON.stringify(binderData),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create binder');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -257,7 +294,7 @@ const BindersPage: React.FC = () => {
       setModalOpen(false);
     },
   });
-  
+
   // Delete binder mutation
   const deleteBinderMutation = useMutation({
     mutationFn: async (binderId: string) => {
@@ -265,30 +302,30 @@ const BindersPage: React.FC = () => {
       const response = await fetch(`/api/binders/${binderId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete binder');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['binders'] });
     },
   });
-  
+
   const handleCreateBinder = (name: string, color: string) => {
     createBinderMutation.mutate({ name, color });
   };
-  
+
   const handleDeleteBinder = (id: string) => {
     console.log("handleDeleteBinder called with ID:", id); // Debug log
     deleteBinderMutation.mutate(id);
   };
-  
+
   return (
     <Layout>
-      <div className="container px-6 py-6">
+      <div className="px-6 py-6 w-full">
         <h1 className="text-2xl font-bold text-white mb-6">I tuoi Binder</h1>
         
         {isLoading ? (
@@ -300,24 +337,27 @@ const BindersPage: React.FC = () => {
             Errore nel caricamento dei Binder. Riprova più tardi.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {/* New Binder Card (always first) */}
-            <NewBinderCard onClick={() => setModalOpen(true)} key="new-binder" />
-            
-            {/* Existing Binders */}
+          <div className="flex flex-wrap gap-4">
+            {/* Existing Binders (first) */}
             {binders?.map((binder: any) => (
-              <BinderCard 
-                key={binder._id} 
-                binder={{
-                  id: binder._id,
-                  name: binder.name,
-                  color: binder.color,
-                  userId: binder.userId,
-                  createdAt: binder.createdAt
-                }} 
-                onDelete={handleDeleteBinder}
-              />
+              <div key={binder._id} className="w-full md:w-[15%] min-w-[150px]">
+                <BinderCard 
+                  binder={{
+                    id: binder._id,
+                    name: binder.name,
+                    color: binder.color,
+                    userId: binder.userId,
+                    createdAt: binder.createdAt
+                  }} 
+                  onDelete={handleDeleteBinder}
+                />
+              </div>
             ))}
+            
+            {/* New Binder Card (last) */}
+            <div key="new-binder" className="w-full md:w-[15%] min-w-[150px]">
+              <NewBinderCard onClick={() => setModalOpen(true)} />
+            </div>
           </div>
         )}
       </div>
@@ -331,5 +371,7 @@ const BindersPage: React.FC = () => {
     </Layout>
   );
 };
+
+
 
 export default BindersPage;
