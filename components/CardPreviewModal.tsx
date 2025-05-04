@@ -79,6 +79,7 @@ const CardPreviewModal: React.FC<CardPreviewModalProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              console.log('Richiesta di rimozione carta dallo slot:', slotNumber);
               onRemoveCard(slotNumber);
               onClose();
             }}

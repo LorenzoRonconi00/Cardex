@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, JSX } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import { useParams, useRouter } from 'next/navigation';
@@ -14,6 +14,10 @@ import CardPreviewModal from './CardPreviewModal';
 type PageProps = {
     pageNumber: number;
     startingSlot: number;
+    gridLayout?: {
+        cols: number;
+        rows: number;
+    }
 };
 
 type CoverProps = {
@@ -22,22 +26,31 @@ type CoverProps = {
 };
 
 // Componente per le pagine standard del raccoglitore
+// BinderPage component with responsive grid layout
 const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
-    const { pageNumber, startingSlot } = props;
+    const { 
+        pageNumber, 
+        startingSlot,
+        gridLayout = { cols: 4, rows: 3 } // Default grid layout is 4x3
+    } = props;
+    
     const params = useParams();
     const binderId = params.id as string;
     
-    // State per lo slot selezionato e i modal
+    // State for selected slot and modals
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [previewCard, setPreviewCard] = useState<Card | null>(null);
     const [previewSlot, setPreviewSlot] = useState<number | null>(null);
     
-    // State per le carte nei slot e le animazioni
+    // State for cards in slots and animations
     const [slotCards, setSlotCards] = useState<{[slotNumber: number]: Card | null}>({});
     const [newlyAddedSlots, setNewlyAddedSlots] = useState<Set<number>>(new Set());
     
-    // Query per caricare i dati degli slot
+    // Calculate total slots based on grid layout
+    const totalSlots = gridLayout.cols * gridLayout.rows;
+    
+    // Query for loading slot data
     const { data: binderSlotsData, isLoading: isLoadingSlots, refetch: refetchSlots } = useQuery({
         queryKey: ['binderSlots', binderId],
         queryFn: async () => {
@@ -48,10 +61,10 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
             const result = await response.json();
             return result.success ? result.data : [];
         },
-        enabled: !!binderId // Esegui solo se binderId esiste
+        enabled: !!binderId // Only run if binderId exists
     });
     
-    // Aggiorna lo state delle carte negli slot quando i dati vengono caricati
+    // Update cards in slots when data is loaded
     useEffect(() => {
         if (binderSlotsData && Array.isArray(binderSlotsData)) {
             const newSlotCards: {[slotNumber: number]: Card | null} = {};
@@ -64,31 +77,31 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
         }
     }, [binderSlotsData]);
     
-    // Ottieni gli ID delle carte già inserite nel binder
+    // Get IDs of cards already in the binder
     const existingCardIds = useMemo(() => {
         return Object.values(slotCards)
             .filter(card => card !== null)
             .map(card => card!.id);
     }, [slotCards]);
     
-    // Gestisce il click su uno slot vuoto per aprire il modal di selezione
+    // Handle click on empty slot to open selection modal
     const handleSlotClick = (slotNumber: number) => {
         setSelectedSlot(slotNumber);
         setIsModalOpen(true);
     };
     
-    // Gestisce il click su una carta inserita per aprire la preview
+    // Handle click on inserted card to open preview
     const handleCardPreview = (card: Card, slotNumber: number) => {
         setPreviewCard(card);
         setPreviewSlot(slotNumber);
     };
     
-    // Gestisce la selezione di una carta dal modal
+    // Handle card selection from modal
     const handleCardSelect = async (card: Card) => {
         if (selectedSlot === null) return;
         
         try {
-            // Invia la richiesta API per aggiungere la carta allo slot
+            // Send API request to add card to slot
             const response = await fetch(`/api/binders/${binderId}/slots`, {
                 method: 'POST',
                 headers: {
@@ -104,73 +117,100 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                 throw new Error('Failed to add card to slot');
             }
             
-            // Aggiorna lo state locale
+            // Update local state
             setSlotCards(prev => ({
                 ...prev,
                 [selectedSlot]: card
             }));
             
-            // Marca questo slot come appena aggiunto per l'animazione
+            // Mark this slot as newly added for animation
             setNewlyAddedSlots(prev => new Set(prev).add(selectedSlot));
             
-            // Imposta un timer per rimuovere il flag di "appena aggiunto" dopo l'animazione
+            // Set timer to remove "newly added" flag after animation
             setTimeout(() => {
                 setNewlyAddedSlots(prev => {
                     const updated = new Set(prev);
                     updated.delete(selectedSlot);
                     return updated;
                 });
-            }, 1000); // Durata dell'animazione + un piccolo margine
+            }, 1000); // Animation duration + small margin
             
-            // Chiude il modal
+            // Close modal
             setIsModalOpen(false);
             setSelectedSlot(null);
             
-            // Ricarica i dati degli slot
+            // Reload slot data
             refetchSlots();
             
         } catch (error) {
             console.error('Error adding card to slot:', error);
             
-            // Chiude il modal anche in caso di errore
+            // Close modal even on error
             setIsModalOpen(false);
             setSelectedSlot(null);
         }
     };
     
-    // Gestisce la rimozione di una carta da uno slot
+    // Handle removing a card from slot
     const handleRemoveCard = async (slotNumber: number) => {
         try {
+            console.log(`Tentativo di rimozione della carta dallo slot ${slotNumber}...`);
+            
             // Invia la richiesta API per rimuovere la carta dallo slot
             const response = await fetch(`/api/binders/${binderId}/slots/${slotNumber}`, {
                 method: 'DELETE'
             });
             
+            // Verifica la risposta più dettagliatamente
+            console.log('Risposta ricevuta:', response.status, response.statusText);
+            
             if (!response.ok) {
-                throw new Error('Failed to remove card from slot');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Dettagli errore:', errorData);
+                throw new Error(`Failed to remove card from slot: ${response.statusText}`);
             }
             
-            // Aggiorna lo state locale
+            console.log('Carta rimossa con successo dallo slot', slotNumber);
+            
+            // Aggiorna lo state locale PRIMA di rifetchare
             setSlotCards(prev => {
                 const newState = { ...prev };
-                delete newState[slotNumber];
+                // Verifica se lo slot esiste prima di eliminarlo
+                if (slotNumber in newState) {
+                    delete newState[slotNumber];
+                    console.log('State aggiornato localmente');
+                } else {
+                    console.log('Slot non trovato nello state locale');
+                }
                 return newState;
             });
             
-            // Ricarica i dati degli slot
-            refetchSlots();
+            // Chiudi il modal di preview se aperto per questo slot
+            if (previewSlot === slotNumber) {
+                setPreviewCard(null);
+                setPreviewSlot(null);
+            }
+            
+            // Ricarica i dati degli slot (opzionale, poiché abbiamo già aggiornato localmente)
+            await refetchSlots();
             
         } catch (error) {
-            console.error('Error removing card from slot:', error);
+            console.error('Errore durante la rimozione della carta:', error);
         }
     };
     
     return (
         <div ref={ref} className="binder-page h-full w-full bg-[#1a1a1a]">
             <div className="h-full w-full p-6">
-                {/* Griglia 4x3 per le tasche del raccoglitore (4 colonne, 3 righe) */}
-                <div className="grid grid-cols-4 grid-rows-3 gap-2 h-full w-full">
-                    {Array(12).fill(0).map((_, index) => {
+                {/* Dynamic responsive grid for binder slots */}
+                <div 
+                    className="grid gap-2 h-full w-full transition-all duration-300 ease-in-out"
+                    style={{
+                        gridTemplateColumns: `repeat(${gridLayout.cols}, minmax(0, 1fr))`,
+                        gridTemplateRows: `repeat(${gridLayout.rows}, minmax(0, 1fr))`
+                    }}
+                >
+                    {Array(totalSlots).fill(0).map((_, index) => {
                         const slotNumber = startingSlot + index;
                         return (
                             <BinderSlot
@@ -185,7 +225,7 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     })}
                 </div>
 
-                {/* Numero pagina */}
+                {/* Page number - positioned relative to parent for better responsiveness */}
                 <div className={`absolute bottom-2 ${pageNumber % 2 === 0 ? 'right-2' : 'left-2'} text-[#555555] text-xs`}>
                     {pageNumber}
                 </div>
@@ -221,7 +261,6 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
         </div>
     );
 });
-
 
 BinderPage.displayName = 'BinderPage';
 
@@ -295,19 +334,36 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
 BackCoverPage.displayName = 'BackCoverPage';
 
 // Componente principale per la visualizzazione del binder
+// Updated BinderView component to handle responsive pages
+// Updated BinderView component to handle responsive pages
 const BinderView: React.FC = () => {
     const params = useParams();
     const binderId = params.id as string;
     const router = useRouter();
 
-    // Riferimento al libro per controllarlo programmaticamente
+    // Reference per il libro
     const bookRef = useRef<any>(null);
 
-    // Stato per tenere traccia della pagina corrente
+    // State per pagina corrente
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
-    // Funzioni per navigare tra le pagine
+    // State per modalità di visualizzazione
+    const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
+    
+    // State per dimensioni del libro
+    const [bookDimensions, setBookDimensions] = useState({
+        width: 1600,
+        height: 840
+    });
+
+    // State per pagine del binder
+    const [binderPages, setBinderPages] = useState<JSX.Element[]>([]);
+    
+    // State per layout della griglia
+    const [gridLayout, setGridLayout] = useState({ cols: 4, rows: 3 });
+
+    // Funzioni di navigazione
     const goToPrevPage = () => {
         if (bookRef.current) {
             bookRef.current.pageFlip().flipPrev();
@@ -320,75 +376,15 @@ const BinderView: React.FC = () => {
         }
     };
 
-    // Handler per gli eventi di cambio pagina
+    // Handler per cambio pagina
     const handleFlip = (e: any) => {
-        setCurrentPage(e.data);
+        if (e && e.data !== undefined) {
+            setCurrentPage(e.data);
+        }
     };
 
-    // State per le dimensioni del libro
-    const [bookDimensions, setBookDimensions] = useState({
-        width: 1600,
-        height: 800
-    });
-
-    // Numero totale di pagine (incluse copertina e retrocopertina)
-    const numPages = 7; // 1 copertina + 5 pagine interne + 1 retrocopertina
-
-    // Crea i ref per le pagine
-    const coverRef = useRef<HTMLDivElement>(null);
-    const page1Ref = useRef<HTMLDivElement>(null);
-    const page2Ref = useRef<HTMLDivElement>(null);
-    const page3Ref = useRef<HTMLDivElement>(null);
-    const page4Ref = useRef<HTMLDivElement>(null);
-    const page5Ref = useRef<HTMLDivElement>(null);
-    const page6Ref = useRef<HTMLDivElement>(null);
-    const backCoverRef = useRef<HTMLDivElement>(null);
-
-    // Aggiorna le dimensioni in base alla larghezza della finestra
-    useEffect(() => {
-        const updateDimensions = () => {
-            const width = window.innerWidth;
-
-            if (width < 640) { // Mobile
-                setBookDimensions({
-                    width: 400,
-                    height: 420
-                });
-            } else if (width < 768) { // Tablet piccolo
-                setBookDimensions({
-                    width: 600,
-                    height: 560
-                });
-            } else if (width < 1024) { // Tablet grande
-                setBookDimensions({
-                    width: 700,
-                    height: 700
-                });
-            } else { // Desktop
-                setBookDimensions({
-                    width: 1600,
-                    height: 840
-                });
-            }
-        };
-
-        // Imposta le dimensioni iniziali
-        updateDimensions();
-
-        // Aggiungi listener per il resize
-        window.addEventListener('resize', updateDimensions);
-
-        // Cleanup
-        return () => window.removeEventListener('resize', updateDimensions);
-    }, []);
-
-    // Funzione per tornare alla pagina precedente
-    const handleGoBack = () => {
-        router.back();
-    };
-
-    // Fetch binder details
-    const { data, isLoading, isError } = useQuery({
+    // Fetch dei dati del binder
+    const { data: binder, isLoading, isError } = useQuery({
         queryKey: ['binder', binderId],
         queryFn: async () => {
             const response = await fetch(`/api/binders/${binderId}`);
@@ -404,8 +400,134 @@ const BinderView: React.FC = () => {
             return result.data;
         }
     });
+    
+    // Funzione per calcolare le pagine totali
+    const calculateTotalPages = (pages: JSX.Element[]) => {
+        setTotalPages(pages.length);
+    };
 
-    const binder = data;
+    // Genera le pagine in base alle dimensioni dello schermo
+    const generatePages = (screenWidth: number) => {
+        if (!binder) return [];
+        
+        const pages: JSX.Element[] = [];
+        const binderColor = binder.color || '#000000';
+        const binderName = binder.name || 'Binder';
+        
+        // Aggiungi copertina
+        pages.push(
+            <CoverPage 
+                key="cover" 
+                ref={React.createRef<HTMLDivElement>()} 
+                color={binderColor} 
+                name={binderName} 
+            />
+        );
+        
+        // Imposta layout in base alla larghezza dello schermo
+        let newGridLayout = { cols: 4, rows: 3 };
+        let totalSlots = 12;
+        let newViewMode: 'single' | 'double' = 'double';
+        
+        if (screenWidth < 1300) {
+            // Schermi piccoli: griglia 2x2, pagina singola
+            newGridLayout = { cols: 2, rows: 2 };
+            totalSlots = 4;
+            newViewMode = 'single';
+        } else if (screenWidth < 1780) {
+            // Schermi medi: griglia 3x3, pagina doppia
+            newGridLayout = { cols: 3, rows: 3 };
+            totalSlots = 9;
+            newViewMode = 'double';
+        } else {
+            // Schermi grandi: griglia 4x3, pagina doppia
+            newGridLayout = { cols: 4, rows: 3 };
+            totalSlots = 12;
+            newViewMode = 'double';
+        }
+        
+        // Aggiorna lo state
+        setGridLayout(newGridLayout);
+        setViewMode(newViewMode);
+        
+        // Calcola totale pagine necessarie
+        const totalCards = 72;
+        const totalInternalPages = Math.ceil(totalCards / totalSlots);
+        
+        // Aggiungi pagine interne
+        for (let i = 0; i < totalInternalPages; i++) {
+            pages.push(
+                <BinderPage 
+                    key={`page-${i+1}`} 
+                    ref={React.createRef<HTMLDivElement>()} 
+                    pageNumber={i+1} 
+                    startingSlot={i * totalSlots + 1}
+                    gridLayout={newGridLayout}
+                />
+            );
+        }
+        
+        // Aggiungi retrocopertina
+        pages.push(
+            <BackCoverPage 
+                key="backcover" 
+                ref={React.createRef<HTMLDivElement>()} 
+                color={binderColor} 
+            />
+        );
+        
+        return pages;
+    };
+
+    // Aggiorna layout in base alla dimensione della finestra
+    useEffect(() => {
+        const updateLayout = () => {
+            const width = window.innerWidth;
+            
+            if (width < 768) {
+                // Mobile - aumenta l'altezza per dare più spazio alle carte
+                setBookDimensions({
+                    width: 340,
+                    height: 500  // Aumentata da 400
+                });
+            } else if (width < 1300) {
+                // Schermi piccoli - aumenta l'altezza per dare più spazio alle carte
+                setBookDimensions({
+                    width: 600,
+                    height: 660  // Aumentata da 560
+                });
+            } else if (width < 1780) {
+                // Schermi medi
+                setBookDimensions({
+                    width: 1200,
+                    height: 800  // Aumentata da 700
+                });
+            } else {
+                // Schermi grandi
+                setBookDimensions({
+                    width: 1600,
+                    height: 940  // Aumentata da 840
+                });
+            }
+            
+            // Genera le pagine
+            if (binder) {
+                const newPages = generatePages(width);
+                setBinderPages(newPages);
+                calculateTotalPages(newPages);
+            }
+        };
+    
+        updateLayout();
+        window.addEventListener('resize', updateLayout);
+    
+        return () => window.removeEventListener('resize', updateLayout);
+    }, [binder]);
+
+    // Torna alla pagina precedente
+    const handleGoBack = () => {
+        router.back();
+    };
 
     // Stato di caricamento
     if (isLoading) {
@@ -429,7 +551,267 @@ const BinderView: React.FC = () => {
         );
     }
 
-    // Visualizzazione del binder
+    // IMPORTANTE: Per i dispositivi piccoli, renderizziamo un componente diverso
+    // Questo è il cambiamento principale - non usiamo più HTMLFlipBook per schermi piccoli
+    if (viewMode === 'single') {
+        return (
+            <Layout>
+                <div className="w-full px-4 sm:px-6 py-6">
+                    {/* Pulsante per tornare indietro */}
+                    <button
+                        onClick={handleGoBack}
+                        className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
+                        aria-label="Torna indietro"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
+                        </svg>
+                        <span>Torna alla raccolta</span>
+                    </button>
+
+                    {/* Titolo del binder */}
+                    <h1
+                        className="text-2xl font-bold text-white mb-6 pb-2 border-b-2"
+                        style={{ borderColor: binder.color }}
+                    >
+                        {binder.name}
+                    </h1>
+
+                    {/* Visualizzazione a pagina singola per dispositivi piccoli */}
+                    <div className="bg-[#2F3136] rounded-lg p-2 sm:p-4 md:p-6 flex justify-center overflow-hidden">
+                        <div className="relative mb-20" style={{ width: bookDimensions.width, height: bookDimensions.height }}>
+                            {/* Mostra solo la pagina corrente */}
+                            <div className="single-page-container" style={{ width: '100%', height: '100%' }}>
+                                {binderPages[currentPage]}
+                            </div>
+
+                            {/* Controlli di navigazione */}
+                            <div className="absolute -bottom-16 left-0 right-0 flex justify-center items-center space-x-6">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                                    disabled={currentPage === 0}
+                                    className={`nav-button flex items-center justify-center w-12 h-12 rounded-full ${currentPage === 0
+                                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                        : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
+                                        }`}
+                                    aria-label="Pagina precedente"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-6 w-6"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M15 19l-7-7 7-7"
+                                        />
+                                    </svg>
+                                </button>
+
+                                <div className="page-indicator text-gray-300 text-sm">
+                                    {currentPage + 1} / {totalPages}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                                    disabled={currentPage === totalPages - 1}
+                                    className={`nav-button flex items-center justify-center w-12 h-12 rounded-full ${currentPage === totalPages - 1
+                                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                        : 'bg-[#36393E] text-white hover:bg-[#4a4d52] transition-colors'
+                                        }`}
+                                    aria-label="Pagina successiva"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-6 w-6"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 5l7 7-7 7"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Indicatore di modalità */}
+                    <div className="mt-8 text-center text-gray-400">
+                        <p className="text-sm">
+                            Visualizzazione singola pagina (2x2)
+                        </p>
+                        <p className="text-sm mt-2">Usa le frecce per sfogliare le pagine</p>
+                    </div>
+                </div>
+
+                {/* Stili CSS */}
+                <style jsx global>{`
+                    /* Stili per la visualizzazione a pagina singola */
+                    .single-page-container {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    
+                    /* Altri stili come prima */
+                    .binder-page {
+                        background-color: #151515;
+                    }
+                    
+                    .pocket {
+                        transition: all 0.2s ease;
+                        position: relative;
+                    }
+                    
+                    .pocket:hover {
+                        transform: scale(1.02);
+                        box-shadow: 0 0 5px rgba(255,255,255,0.2);
+                    }
+                    
+                    .pocket::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.2);
+                        border-radius: 2px;
+                        pointer-events: none;
+                    }
+                    
+                    .card-placeholder {
+                        color: #555555;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        text-align: center;
+                        white-space: nowrap;
+                    }
+                    
+                    .border-dashed {
+                        border-width: 1px;
+                        border-style: dashed;
+                        border-color: #444444;
+                    }
+                    
+                    .nav-button {
+                        transition: all 0.2s ease;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                    }
+                    
+                    .nav-button:hover:not(:disabled) {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+                    }
+                    
+                    .nav-button:active:not(:disabled) {
+                        transform: translateY(0);
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                    }
+                    
+                    .page-indicator {
+                        background-color: rgba(54, 57, 62, 0.7);
+                        padding: 4px 12px;
+                        border-radius: 12px;
+                        font-weight: 500;
+                    }
+                    
+                    @keyframes card-enter {
+                        0% {
+                            transform: translateY(-30px) scale(0.8);
+                            opacity: 0;
+                        }
+                        70% {
+                            transform: translateY(5px) scale(1.05);
+                            opacity: 0.7;
+                        }
+                        100% {
+                            transform: translateY(0) scale(1);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    .animate-card-enter {
+                        animation: card-enter 0.5s ease forwards;
+                    }
+                    
+                    .pocket {
+                        transition: all 0.3s ease;
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    
+                    .pocket:hover {
+                        transform: scale(1.02);
+                        box-shadow: 0 0 8px rgba(255,255,255,0.2);
+                    }
+                    
+                    .pocket-filled {
+                        background-color: #1a1a1a;
+                    }
+                    
+                    .pocket-filled:hover {
+                        transform: scale(1.03);
+                        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+                    }
+                    
+                    .card-container {
+                        border-radius: 5px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                    }
+                    
+                    .modal-overlay {
+                        position: fixed;
+                        inset: 0;
+                        background-color: rgba(0, 0, 0, 0.75);
+                        z-index: 50;
+                        backdrop-filter: blur(2px);
+                    }
+                    
+                    .modal-content {
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: #2A2D31;
+                        border-radius: 0.5rem;
+                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+                        z-index: 60;
+                        overflow: hidden;
+                    }
+                    
+                    .card-placeholder {
+                        font-weight: 500;
+                        opacity: 0.6;
+                        letter-spacing: 0.05em;
+                    }
+                `}</style>
+            </Layout>
+        );
+    }
+    
+    // Visualizzazione normale a doppia pagina per schermi grandi
     return (
         <Layout>
             <div className="w-full px-4 sm:px-6 py-6">
@@ -456,7 +838,7 @@ const BinderView: React.FC = () => {
                     <span>Torna alla raccolta</span>
                 </button>
 
-                {/* Titolo del binder con il colore personalizzato */}
+                {/* Titolo del binder */}
                 <h1
                     className="text-2xl font-bold text-white mb-6 pb-2 border-b-2"
                     style={{ borderColor: binder.color }}
@@ -470,45 +852,30 @@ const BinderView: React.FC = () => {
                         <HTMLFlipBook
                             width={bookDimensions.width / 2}
                             height={bookDimensions.height}
-                            maxShadowOpacity={0.5}
-                            showCover={true}
                             size="fixed"
                             minWidth={bookDimensions.width / 2}
                             maxWidth={bookDimensions.width / 2}
                             minHeight={bookDimensions.height}
                             maxHeight={bookDimensions.height}
+                            maxShadowOpacity={0.5}
+                            showCover={true}
                             startPage={0}
                             drawShadow={true}
                             flippingTime={1000}
                             usePortrait={false}
                             startZIndex={0}
                             autoSize={false}
-
-                            // Proprietà per disabilitare tutte le interazioni
-                            disableFlipByClick={true}       // Disabilita il click per cambiare pagina
-                            useMouseEvents={false}          // Disabilita completamente gli eventi del mouse
-                            swipeDistance={999999}          // Richiede uno swipe impossibile
-                            clickEventForward={false}       // Non inoltra gli eventi di click
-                            showPageCorners={false}         // Rimuove gli angoli interattivi
-                            mobileScrollSupport={false}     // Disabilita il supporto per lo scroll
-
+                            showPageCorners={false}
+                            disableFlipByClick={true}
+                            useMouseEvents={false}
+                            swipeDistance={999999}
+                            clickEventForward={false}
+                            mobileScrollSupport={false}
+                            style={{ margin: '0 auto' }}
                             ref={bookRef}
                             onFlip={handleFlip}
-                            onInit={(e: any) => setTotalPages(e.data.pages.length)}
                         >
-                            {/* Copertina */}
-                            <CoverPage ref={coverRef} color={binder.color} name={binder.name} />
-
-                            {/* Pagine interne */}
-                            <BinderPage ref={page1Ref} pageNumber={1} startingSlot={1} />
-                            <BinderPage ref={page2Ref} pageNumber={2} startingSlot={13} />
-                            <BinderPage ref={page3Ref} pageNumber={3} startingSlot={25} />
-                            <BinderPage ref={page4Ref} pageNumber={4} startingSlot={37} />
-                            <BinderPage ref={page5Ref} pageNumber={5} startingSlot={49} />
-                            <BinderPage ref={page6Ref} pageNumber={6} startingSlot={61} />
-
-                            {/* Retrocopertina */}
-                            <BackCoverPage ref={backCoverRef} color={binder.color} />
+                            {binderPages}
                         </HTMLFlipBook>
 
                         {/* Controlli di navigazione */}
@@ -565,153 +932,143 @@ const BinderView: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Istruzioni */}
-                <div className="mt-8 text-center text-gray-400">
-                    <p className="text-sm">Usa le frecce per sfogliare le pagine</p>
-                </div>
             </div>
 
-            {/* CSS personalizzato per l'aspetto del raccoglitore */}
+            {/* Stili CSS */}
             <style jsx global>{`
-        .binder-page {
-          background-color: #151515;
-        }
-        
-        .pocket {
-          transition: all 0.2s ease;
-          position: relative;
-        }
-        
-        .pocket:hover {
-          transform: scale(1.02);
-          box-shadow: 0 0 5px rgba(255,255,255,0.2);
-        }
-        
-        .pocket::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 2px;
-          pointer-events: none;
-        }
-        
-        .card-placeholder {
-          color: #555555;
-          font-size: 0.75rem;
-          font-weight: 500;
-          text-align: center;
-          white-space: nowrap;
-        }
-        
-        /* Migliora la visibilità dei bordi tratteggiati */
-        .border-dashed {
-          border-width: 1px;
-          border-style: dashed;
-          border-color: #444444;
-        }
-        
-        /* Stili per i controlli di navigazione */
-        .nav-button {
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .nav-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-        
-        .nav-button:active:not(:disabled) {
-          transform: translateY(0);
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-        
-        .page-indicator {
-          background-color: rgba(54, 57, 62, 0.7);
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-weight: 500;
-        }
-
-        @keyframes card-enter {
-  0% {
-    transform: translateY(-30px) scale(0.8);
-    opacity: 0;
-  }
-  70% {
-    transform: translateY(5px) scale(1.05);
-    opacity: 0.7;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-card-enter {
-  animation: card-enter 0.5s ease forwards;
-}
-
-/* Il resto degli stili rimane invariato */
-.pocket {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.pocket:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 8px rgba(255,255,255,0.2);
-}
-
-.pocket-filled {
-  background-color: #1a1a1a;
-}
-
-.pocket-filled:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 10px rgba(255,255,255,0.3);
-}
-
-.card-container {
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Migliora l'aspetto del modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  z-index: 50;
-  backdrop-filter: blur(2px);
-}
-
-.modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #2A2D31;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  z-index: 60;
-  overflow: hidden;
-}
-
-/* Stile per placeholder delle tasche vuote */
-.card-placeholder {
-  font-weight: 500;
-  opacity: 0.6;
-  letter-spacing: 0.05em;
-}
-      `}</style>
+                .binder-page {
+                    background-color: #151515;
+                }
+                
+                .pocket {
+                    transition: all 0.2s ease;
+                    position: relative;
+                }
+                
+                .pocket:hover {
+                    transform: scale(1.02);
+                    box-shadow: 0 0 5px rgba(255,255,255,0.2);
+                }
+                
+                .pocket::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.2);
+                    border-radius: 2px;
+                    pointer-events: none;
+                }
+                
+                .card-placeholder {
+                    color: #555555;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    text-align: center;
+                    white-space: nowrap;
+                }
+                
+                .border-dashed {
+                    border-width: 1px;
+                    border-style: dashed;
+                    border-color: #444444;
+                }
+                
+                .nav-button {
+                    transition: all 0.2s ease;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                }
+                
+                .nav-button:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+                }
+                
+                .nav-button:active:not(:disabled) {
+                    transform: translateY(0);
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                }
+                
+                .page-indicator {
+                    background-color: rgba(54, 57, 62, 0.7);
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                }
+                
+                @keyframes card-enter {
+                    0% {
+                        transform: translateY(-30px) scale(0.8);
+                        opacity: 0;
+                    }
+                    70% {
+                        transform: translateY(5px) scale(1.05);
+                        opacity: 0.7;
+                    }
+                    100% {
+                        transform: translateY(0) scale(1);
+                        opacity: 1;
+                    }
+                }
+                
+                .animate-card-enter {
+                    animation: card-enter 0.5s ease forwards;
+                }
+                
+                .pocket {
+                    transition: all 0.3s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .pocket:hover {
+                    transform: scale(1.02);
+                    box-shadow: 0 0 8px rgba(255,255,255,0.2);
+                }
+                
+                .pocket-filled {
+                    background-color: #1a1a1a;
+                }
+                
+                .pocket-filled:hover {
+                    transform: scale(1.03);
+                    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+                }
+                
+                .card-container {
+                    border-radius: 5px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                }
+                
+                .modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background-color: rgba(0, 0, 0, 0.75);
+                    z-index: 50;
+                    backdrop-filter: blur(2px);
+                }
+                
+                .modal-content {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #2A2D31;
+                    border-radius: 0.5rem;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+                    z-index: 60;
+                    overflow: hidden;
+                }
+                
+                .card-placeholder {
+                    font-weight: 500;
+                    opacity: 0.6;
+                    letter-spacing: 0.05em;
+                }
+            `}</style>
         </Layout>
     );
 };
