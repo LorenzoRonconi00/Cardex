@@ -1,5 +1,4 @@
-//lib/db.ts
-
+// lib/db.ts
 import mongoose from 'mongoose';
 
 // Definizione dell'interfaccia per la cache di mongoose
@@ -56,161 +55,193 @@ async function connectToDatabase() {
   return cached.conn;
 }
 
-// Card Schema
-const cardSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  imageUrl: {
-    type: String,
-    required: true
-  },
-  expansion: {
-    type: String,
-    required: true
-  },
-  isCollected: {
-    type: Boolean,
-    default: false
-  },
-  dateCollected: {
-    type: Date,
-    default: null
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: false
-  }
-});
+// IMPORTANTE: Per evitare problemi con hot-reload, verifichiamo se i modelli esistono già
+// prima di definirli
 
-cardSchema.index({ id: 1, userId: 1 }, { unique: true });
+// Card Schema
+const cardSchema = !mongoose.models.Card 
+  ? new mongoose.Schema({
+      id: {
+        type: String,
+        required: true
+      },
+      name: {
+        type: String,
+        required: true
+      },
+      imageUrl: {
+        type: String,
+        required: true
+      },
+      expansion: {
+        type: String,
+        required: true
+      },
+      isCollected: {
+        type: Boolean,
+        default: false
+      },
+      dateCollected: {
+        type: Date,
+        default: null
+      },
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+      }
+    })
+  : mongoose.models.Card.schema;
+
+if (!mongoose.models.Card) {
+  cardSchema.index({ id: 1, userId: 1 }, { unique: true });
+}
 
 // Expansion Schema
-const expansionSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  logo: String,
-  releaseDate: String
-});
+const expansionSchema = !mongoose.models.Expansion 
+  ? new mongoose.Schema({
+      id: {
+        type: String,
+        required: true,
+        unique: true
+      },
+      name: {
+        type: String,
+        required: true
+      },
+      slug: {
+        type: String,
+        required: true,
+        unique: true
+      },
+      logo: String,
+      releaseDate: String
+    })
+  : mongoose.models.Expansion.schema;
 
-const wishlistItemSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true,
-    index: true  // Aggiunge un indice per migliorare le prestazioni delle query
-  },
-  card: {
-    type: Object,
-    required: true
-  },
-  price: {
-    type: Number,
-    required: true
-  },
-  dateAdded: {
-    type: Date,
-    default: Date.now
-  }
-}, { timestamps: true });
+// Wishlist Schema
+const wishlistItemSchema = !mongoose.models.WishlistItem 
+  ? new mongoose.Schema({
+      userId: {
+        type: String,
+        required: true,
+        index: true  // Aggiunge un indice per migliorare le prestazioni delle query
+      },
+      card: {
+        type: Object,
+        required: true
+      },
+      price: {
+        type: Number,
+        required: true
+      },
+      dateAdded: {
+        type: Date,
+        default: Date.now
+      }
+    }, { timestamps: true })
+  : mongoose.models.WishlistItem.schema;
 
-wishlistItemSchema.index({ userId: 1, 'card.id': 1 }, { unique: true });
+if (!mongoose.models.WishlistItem) {
+  wishlistItemSchema.index({ userId: 1, 'card.id': 1 }, { unique: true });
+}
 
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: {
-    type: String,
-    unique: true,
-  },
-  emailVerified: Date,
-  image: String,
-  accounts: [
-    {
-      provider: String,
-      providerAccountId: String,
-      type: String,
-      access_token: String,
-      expires_at: Number,
-      token_type: String,
-      id_token: String,
-      scope: String,
-    }
-  ],
-  sessions: [
-    {
-      expires: Date,
-      sessionToken: String,
-    }
-  ],
-});
+// User Schema
+const userSchema = !mongoose.models.User 
+  ? new mongoose.Schema({
+      name: String,
+      email: {
+        type: String,
+        unique: true,
+      },
+      emailVerified: Date,
+      image: String,
+      accounts: [
+        {
+          provider: String,
+          providerAccountId: String,
+          type: String,
+          access_token: String,
+          expires_at: Number,
+          token_type: String,
+          id_token: String,
+          scope: String,
+        }
+      ],
+      sessions: [
+        {
+          expires: Date,
+          sessionToken: String,
+        }
+      ],
+    })
+  : mongoose.models.User.schema;
 
-// Binder Schema
-const binderSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  color: {
-    type: String,
-    required: true,
-    default: 'red'
-  },
-  userId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+// Binder Schema - QUESTO È QUELLO CHE DOBBIAMO MODIFICARE
+const binderSchema = !mongoose.models.Binder
+  ? new mongoose.Schema({
+      name: {
+        type: String,
+        required: true
+      },
+      color: {
+        type: String,
+        required: true,
+        default: 'red'
+      },
+      slotCount: {
+        type: Number,
+        required: true,
+        default: 180,
+        enum: [180, 360, 540, 720]  // Solo questi valori sono consentiti
+      },
+      userId: {
+        type: String,
+        required: true,
+        index: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    })
+  : mongoose.models.Binder.schema;
 
-binderSchema.index({ userId: 1, name: 1 }, { unique: true });
+if (!mongoose.models.Binder) {
+  binderSchema.index({ userId: 1, name: 1 }, { unique: true });
+}
 
-const binderSlotSchema = new mongoose.Schema({
-  binderId: { 
-    type: String, 
-    required: true,
-    index: true
-  },
-  slotNumber: { 
-    type: Number, 
-    required: true 
-  },
-  cardId: { 
-    type: String, 
-    required: true 
-  },
-  userId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  addedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+// Binder Slot Schema
+const binderSlotSchema = !mongoose.models.BinderSlot
+  ? new mongoose.Schema({
+      binderId: { 
+        type: String, 
+        required: true,
+        index: true
+      },
+      slotNumber: { 
+        type: Number, 
+        required: true 
+      },
+      cardId: { 
+        type: String, 
+        required: true 
+      },
+      userId: {
+        type: String,
+        required: true,
+        index: true
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now
+      }
+    })
+  : mongoose.models.BinderSlot.schema;
 
-binderSlotSchema.index({ binderId: 1, slotNumber: 1 }, { unique: true });
+if (!mongoose.models.BinderSlot) {
+  binderSlotSchema.index({ binderId: 1, slotNumber: 1 }, { unique: true });
+}
 
 // Controlla se il modello esiste già prima di crearlo (evita errori in hot-reload)
 export const Card = mongoose.models.Card || mongoose.model('Card', cardSchema);

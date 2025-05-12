@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
@@ -10,11 +10,17 @@ import { Binder } from '@/lib/types';
 const CreateBinderModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, color: string) => void;
+  onSave: (name: string, color: string, slotCount: number) => void;
 }> = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
   const [color, setColor] = useState('#ec6246'); // default to Charizard color
+  const [slotCount, setSlotCount] = useState(180); // default to 180 slots
   const [error, setError] = useState('');
+
+  // Per debug
+  useEffect(() => {
+    console.log("Current slotCount in modal state:", slotCount, typeof slotCount);
+  }, [slotCount]);
 
   // Available color options using hex values directly
   const pokemonOptions = [
@@ -30,15 +36,32 @@ const CreateBinderModal: React.FC<{
     { name: 'ho-oh', image: 'ho-oh_logo_template.png', value: '#e54b33' },
   ];
 
+  // Available slot count options
+  const slotCountOptions = [
+    { value: 180, label: '180 tasche' },
+    { value: 360, label: '360 tasche' },
+    { value: 540, label: '540 tasche' },
+    { value: 720, label: '720 tasche' },
+  ];
+
+  // Funzione esplicita per gestire il cambio del select
+  const handleSlotCountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = parseInt(e.target.value, 10);
+    console.log("Select changed:", e.target.value, "Parsed to:", newValue, "Type:", typeof newValue);
+    setSlotCount(newValue);
+  };
+
   const handleSubmit = () => {
     if (!name.trim()) {
       setError('Il nome è obbligatorio');
       return;
     }
 
-    onSave(name, color);
+    console.log("Submitting form with slotCount:", slotCount, typeof slotCount);
+    onSave(name, color, slotCount);
     setName('');
     setColor('#ec6246'); // reset to Charizard color
+    setSlotCount(180); // reset to default slot count
     setError('');
   };
 
@@ -64,6 +87,27 @@ const CreateBinderModal: React.FC<{
             className="w-full bg-[#2F3136] border border-[#202225] rounded p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Inserisci un nome..."
           />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">Numero di slot</label>
+          <select
+            value={slotCount}
+            onChange={handleSlotCountChange}
+            className="w-full bg-[#2F3136] border border-[#202225] rounded p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {slotCountOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-gray-400 text-xs mt-1">
+            Il numero di slot determina quante carte puoi inserire nel raccoglitore
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Valore attuale: {slotCount} (type: {typeof slotCount})
+          </p>
         </div>
 
         <div className="mb-6">
@@ -182,6 +226,11 @@ const BinderCard: React.FC<{
           {binder.name}
         </h3>
         
+        {/* Slot Count Badge */}
+        <div className="mt-1 px-2 py-0.5 bg-gray-700 rounded-full text-gray-300 text-xs">
+          {binder.slotCount || 180} slot
+        </div>
+        
         {/* Delete button (visible on hover) */}
         {onDelete && (
           <button
@@ -273,7 +322,7 @@ const BindersPage: React.FC = () => {
 
   // Create binder mutation
   const createBinderMutation = useMutation({
-    mutationFn: async (binderData: { name: string; color: string }) => {
+    mutationFn: async (binderData: { name: string; color: string; slotCount: number }) => {
       const response = await fetch('/api/binders', {
         method: 'POST',
         headers: {
@@ -314,8 +363,16 @@ const BindersPage: React.FC = () => {
     },
   });
 
-  const handleCreateBinder = (name: string, color: string) => {
-    createBinderMutation.mutate({ name, color });
+  const handleCreateBinder = (name: string, color: string, slotCount: number) => {
+    // Controllo esplicito dei tipi
+    const bindingData = {
+      name, 
+      color, 
+      slotCount: Number(slotCount) // Assicurarsi che sia un numero
+    };
+    
+    console.log("Creating binder with data:", bindingData);
+    createBinderMutation.mutate(bindingData);
   };
 
   const handleDeleteBinder = (id: string) => {
@@ -347,6 +404,7 @@ const BindersPage: React.FC = () => {
                     name: binder.name,
                     color: binder.color,
                     userId: binder.userId,
+                    slotCount: binder.slotCount || 180, // Add default if missing
                     createdAt: binder.createdAt
                   }} 
                   onDelete={handleDeleteBinder}

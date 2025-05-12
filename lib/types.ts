@@ -125,7 +125,8 @@ export interface Binder {
   name: string;
   color: string;
   userId: string;
-  createdAt?: Date;
+  slotCount: number;
+  createdAt: string | Date;
 }
 
 export interface BinderSlotData {

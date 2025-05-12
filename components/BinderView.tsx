@@ -28,28 +28,28 @@ type CoverProps = {
 // Componente per le pagine standard del raccoglitore
 // BinderPage component with responsive grid layout
 const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
-    const { 
-        pageNumber, 
+    const {
+        pageNumber,
         startingSlot,
         gridLayout = { cols: 4, rows: 3 } // Default grid layout is 4x3
     } = props;
-    
+
     const params = useParams();
     const binderId = params.id as string;
-    
+
     // State for selected slot and modals
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [previewCard, setPreviewCard] = useState<Card | null>(null);
     const [previewSlot, setPreviewSlot] = useState<number | null>(null);
-    
+
     // State for cards in slots and animations
-    const [slotCards, setSlotCards] = useState<{[slotNumber: number]: Card | null}>({});
+    const [slotCards, setSlotCards] = useState<{ [slotNumber: number]: Card | null }>({});
     const [newlyAddedSlots, setNewlyAddedSlots] = useState<Set<number>>(new Set());
-    
+
     // Calculate total slots based on grid layout
     const totalSlots = gridLayout.cols * gridLayout.rows;
-    
+
     // Query for loading slot data
     const { data: binderSlotsData, isLoading: isLoadingSlots, refetch: refetchSlots } = useQuery({
         queryKey: ['binderSlots', binderId],
@@ -63,11 +63,11 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
         },
         enabled: !!binderId // Only run if binderId exists
     });
-    
+
     // Update cards in slots when data is loaded
     useEffect(() => {
         if (binderSlotsData && Array.isArray(binderSlotsData)) {
-            const newSlotCards: {[slotNumber: number]: Card | null} = {};
+            const newSlotCards: { [slotNumber: number]: Card | null } = {};
             binderSlotsData.forEach((slot: any) => {
                 if (slot.slotNumber && slot.card) {
                     newSlotCards[slot.slotNumber] = slot.card;
@@ -76,30 +76,30 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
             setSlotCards(newSlotCards);
         }
     }, [binderSlotsData]);
-    
+
     // Get IDs of cards already in the binder
     const existingCardIds = useMemo(() => {
         return Object.values(slotCards)
             .filter(card => card !== null)
             .map(card => card!.id);
     }, [slotCards]);
-    
+
     // Handle click on empty slot to open selection modal
     const handleSlotClick = (slotNumber: number) => {
         setSelectedSlot(slotNumber);
         setIsModalOpen(true);
     };
-    
+
     // Handle click on inserted card to open preview
     const handleCardPreview = (card: Card, slotNumber: number) => {
         setPreviewCard(card);
         setPreviewSlot(slotNumber);
     };
-    
+
     // Handle card selection from modal
     const handleCardSelect = async (card: Card) => {
         if (selectedSlot === null) return;
-        
+
         try {
             // Send API request to add card to slot
             const response = await fetch(`/api/binders/${binderId}/slots`, {
@@ -112,20 +112,20 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     cardId: card.id
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to add card to slot');
             }
-            
+
             // Update local state
             setSlotCards(prev => ({
                 ...prev,
                 [selectedSlot]: card
             }));
-            
+
             // Mark this slot as newly added for animation
             setNewlyAddedSlots(prev => new Set(prev).add(selectedSlot));
-            
+
             // Set timer to remove "newly added" flag after animation
             setTimeout(() => {
                 setNewlyAddedSlots(prev => {
@@ -134,44 +134,44 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     return updated;
                 });
             }, 1000); // Animation duration + small margin
-            
+
             // Close modal
             setIsModalOpen(false);
             setSelectedSlot(null);
-            
+
             // Reload slot data
             refetchSlots();
-            
+
         } catch (error) {
             console.error('Error adding card to slot:', error);
-            
+
             // Close modal even on error
             setIsModalOpen(false);
             setSelectedSlot(null);
         }
     };
-    
+
     // Handle removing a card from slot
     const handleRemoveCard = async (slotNumber: number) => {
         try {
             console.log(`Tentativo di rimozione della carta dallo slot ${slotNumber}...`);
-            
+
             // Invia la richiesta API per rimuovere la carta dallo slot
             const response = await fetch(`/api/binders/${binderId}/slots/${slotNumber}`, {
                 method: 'DELETE'
             });
-            
+
             // Verifica la risposta più dettagliatamente
             console.log('Risposta ricevuta:', response.status, response.statusText);
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Dettagli errore:', errorData);
                 throw new Error(`Failed to remove card from slot: ${response.statusText}`);
             }
-            
+
             console.log('Carta rimossa con successo dallo slot', slotNumber);
-            
+
             // Aggiorna lo state locale PRIMA di rifetchare
             setSlotCards(prev => {
                 const newState = { ...prev };
@@ -184,26 +184,26 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                 }
                 return newState;
             });
-            
+
             // Chiudi il modal di preview se aperto per questo slot
             if (previewSlot === slotNumber) {
                 setPreviewCard(null);
                 setPreviewSlot(null);
             }
-            
+
             // Ricarica i dati degli slot (opzionale, poiché abbiamo già aggiornato localmente)
             await refetchSlots();
-            
+
         } catch (error) {
             console.error('Errore durante la rimozione della carta:', error);
         }
     };
-    
+
     return (
         <div ref={ref} className="binder-page h-full w-full bg-[#1a1a1a]">
             <div className="h-full w-full p-6">
                 {/* Dynamic responsive grid for binder slots */}
-                <div 
+                <div
                     className="grid gap-2 h-full w-full transition-all duration-300 ease-in-out"
                     style={{
                         gridTemplateColumns: `repeat(${gridLayout.cols}, minmax(0, 1fr))`,
@@ -230,7 +230,7 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     {pageNumber}
                 </div>
             </div>
-            
+
             {/* Card Selection Modal */}
             {isModalOpen && selectedSlot !== null && (
                 <CardSelectionModal
@@ -244,7 +244,7 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
                     existingCardIds={existingCardIds}
                 />
             )}
-            
+
             {/* Card Preview Modal */}
             {previewCard && previewSlot !== null && (
                 <CardPreviewModal
@@ -268,7 +268,7 @@ BinderPage.displayName = 'BinderPage';
 const CoverPage = React.forwardRef<HTMLDivElement, CoverProps>((props, ref) => {
     const { color, name } = props;
     const [imageSuffix, setImageSuffix] = useState("_940");
-    
+
     // Funzione per ottenere l'immagine della cover in base al colore
     const getCoverBaseImage = (color: string) => {
         const colorToImage: { [key: string]: string } = {
@@ -283,15 +283,15 @@ const CoverPage = React.forwardRef<HTMLDivElement, CoverProps>((props, ref) => {
             '#d9dcef': 'lugia',
             '#e54b33': 'ho-oh'
         };
-        
+
         return colorToImage[color] || 'Charizard'; // Default a Charizard se il colore non è trovato
     };
-    
+
     // Aggiorna il suffisso dell'immagine in base alle dimensioni dello schermo
     useEffect(() => {
         const updateImageSize = () => {
             const width = window.innerWidth;
-            
+
             if (width < 768) {
                 // Mobile
                 setImageSuffix("_500");
@@ -306,26 +306,26 @@ const CoverPage = React.forwardRef<HTMLDivElement, CoverProps>((props, ref) => {
                 setImageSuffix("_940");
             }
         };
-        
+
         // Chiamata iniziale
         updateImageSize();
-        
+
         // Aggiungi listener per il resize
         window.addEventListener('resize', updateImageSize);
-        
+
         // Cleanup
         return () => {
             window.removeEventListener('resize', updateImageSize);
         };
     }, []);
-    
+
     // Componimento del nome dell'immagine completo
     const imageFileName = `${getCoverBaseImage(color)}${imageSuffix}.svg`;
 
     return (
         <div ref={ref} className="h-full w-full relative">
             <div className="absolute inset-0 flex items-center justify-center">
-                <img 
+                <img
                     src={`/images/binders_cover/${imageFileName}`}
                     alt="Cover"
                     className="w-full h-full object-contain"
@@ -341,7 +341,7 @@ CoverPage.displayName = 'CoverPage';
 const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props, ref) => {
     const { color } = props;
     const [imageSuffix, setImageSuffix] = useState("_940");
-    
+
     // Funzione per ottenere l'immagine del retro in base al colore
     const getBackImage = (color: string) => {
         const colorToImage: { [key: string]: string } = {
@@ -356,7 +356,7 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
             '#d9dcef': 'lugia_back',
             '#e54b33': 'ho-oh_back'
         };
-        
+
         return colorToImage[color] || 'Charizard_back.svg'; // Default a Charizard se il colore non è trovato
     };
 
@@ -364,7 +364,7 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
     useEffect(() => {
         const updateImageSize = () => {
             const width = window.innerWidth;
-            
+
             if (width < 768) {
                 // Mobile
                 setImageSuffix("_500");
@@ -379,13 +379,13 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
                 setImageSuffix("_940");
             }
         };
-        
+
         // Chiamata iniziale
         updateImageSize();
-        
+
         // Aggiungi listener per il resize
         window.addEventListener('resize', updateImageSize);
-        
+
         // Cleanup
         return () => {
             window.removeEventListener('resize', updateImageSize);
@@ -398,7 +398,7 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
     return (
         <div ref={ref} className="h-full w-full relative">
             <div className="absolute inset-0 flex items-center justify-center">
-                <img 
+                <img
                     src={`/images/binders_cover/${imageFileName}`}
                     alt="Cover"
                     className="w-full h-full object-contain"
@@ -427,7 +427,7 @@ const BinderView: React.FC = () => {
 
     // State per modalità di visualizzazione
     const [viewMode, setViewMode] = useState<'single' | 'double'>('double');
-    
+
     // State per dimensioni del libro
     const [bookDimensions, setBookDimensions] = useState({
         width: 1600,
@@ -436,7 +436,7 @@ const BinderView: React.FC = () => {
 
     // State per pagine del binder
     const [binderPages, setBinderPages] = useState<JSX.Element[]>([]);
-    
+
     // State per layout della griglia
     const [gridLayout, setGridLayout] = useState({ cols: 4, rows: 3 });
 
@@ -477,7 +477,7 @@ const BinderView: React.FC = () => {
             return result.data;
         }
     });
-    
+
     // Funzione per calcolare le pagine totali
     const calculateTotalPages = (pages: JSX.Element[]) => {
         setTotalPages(pages.length);
@@ -486,26 +486,26 @@ const BinderView: React.FC = () => {
     // Genera le pagine in base alle dimensioni dello schermo
     const generatePages = (screenWidth: number) => {
         if (!binder) return [];
-        
+
         const pages: JSX.Element[] = [];
         const binderColor = binder.color || '#000000';
         const binderName = binder.name || 'Binder';
-        
+
         // Aggiungi copertina
         pages.push(
-            <CoverPage 
-                key="cover" 
-                ref={React.createRef<HTMLDivElement>()} 
-                color={binderColor} 
-                name={binderName} 
+            <CoverPage
+                key="cover"
+                ref={React.createRef<HTMLDivElement>()}
+                color={binderColor}
+                name={binderName}
             />
         );
-        
+
         // Imposta layout in base alla larghezza dello schermo
         let newGridLayout = { cols: 4, rows: 3 };
         let totalSlots = 12;
         let newViewMode: 'single' | 'double' = 'double';
-        
+
         if (screenWidth < 1300) {
             // Schermi piccoli: griglia 2x2, pagina singola
             newGridLayout = { cols: 2, rows: 2 };
@@ -522,37 +522,37 @@ const BinderView: React.FC = () => {
             totalSlots = 12;
             newViewMode = 'double';
         }
-        
+
         // Aggiorna lo state
         setGridLayout(newGridLayout);
         setViewMode(newViewMode);
-        
-        // Calcola totale pagine necessarie
-        const totalCards = 72;
+
+        // Calcola totale pagine necessarie basato sul numero di slot del binder
+        const totalCards = binder.slotCount || 180; // Use the slotCount from the binder
         const totalInternalPages = Math.ceil(totalCards / totalSlots);
-        
+
         // Aggiungi pagine interne
         for (let i = 0; i < totalInternalPages; i++) {
             pages.push(
-                <BinderPage 
-                    key={`page-${i+1}`} 
-                    ref={React.createRef<HTMLDivElement>()} 
-                    pageNumber={i+1} 
+                <BinderPage
+                    key={`page-${i + 1}`}
+                    ref={React.createRef<HTMLDivElement>()}
+                    pageNumber={i + 1}
                     startingSlot={i * totalSlots + 1}
                     gridLayout={newGridLayout}
                 />
             );
         }
-        
+
         // Aggiungi retrocopertina
         pages.push(
-            <BackCoverPage 
-                key="backcover" 
-                ref={React.createRef<HTMLDivElement>()} 
-                color={binderColor} 
+            <BackCoverPage
+                key="backcover"
+                ref={React.createRef<HTMLDivElement>()}
+                color={binderColor}
             />
         );
-        
+
         return pages;
     };
 
@@ -560,7 +560,7 @@ const BinderView: React.FC = () => {
     useEffect(() => {
         const updateLayout = () => {
             const width = window.innerWidth;
-            
+
             if (width < 768) {
                 // Mobile - aumenta l'altezza per dare più spazio alle carte
                 setBookDimensions({
@@ -586,7 +586,7 @@ const BinderView: React.FC = () => {
                     height: 940  // Aumentata da 840
                 });
             }
-            
+
             // Genera le pagine
             if (binder) {
                 const newPages = generatePages(width);
@@ -594,10 +594,10 @@ const BinderView: React.FC = () => {
                 calculateTotalPages(newPages);
             }
         };
-    
+
         updateLayout();
         window.addEventListener('resize', updateLayout);
-    
+
         return () => window.removeEventListener('resize', updateLayout);
     }, [binder]);
 
@@ -887,7 +887,7 @@ const BinderView: React.FC = () => {
             </Layout>
         );
     }
-    
+
     // Visualizzazione normale a doppia pagina per schermi grandi
     return (
         <Layout>
@@ -981,6 +981,10 @@ const BinderView: React.FC = () => {
                                     />
                                 </svg>
                             </button>
+
+                            <div className="page-indicator text-gray-300 text-sm">
+                                {currentPage + 1} / {totalPages}
+                            </div>
 
                             <button
                                 onClick={goToNextPage}

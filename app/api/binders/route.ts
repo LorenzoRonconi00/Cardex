@@ -38,9 +38,24 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id;
     const body = await req.json();
     
+    console.log("API - Received request body:", body);
+    
     if (!body.name || !body.color) {
       return NextResponse.json({ success: false, error: 'Name and color are required' }, { status: 400 });
     }
+
+    // Validate slotCount
+    const validSlotCounts = [180, 360, 540, 720];
+    
+    // Conversione a numero con parseInt per essere super sicuri
+    let slotCount = parseInt(body.slotCount, 10);
+    
+    // Validazione finale del valore
+    if (isNaN(slotCount) || !validSlotCounts.includes(slotCount)) {
+      slotCount = 180; // Default se invalido
+    }
+    
+    console.log("API - Final slotCount value:", slotCount, "type:", typeof slotCount);
 
     await connectToDatabase();
     
@@ -50,13 +65,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'A binder with this name already exists' }, { status: 409 });
     }
     
-    const newBinder = new Binder({
+    // Mostra lo schema Binder per debug
+    console.log("API - Binder schema paths:", Object.keys(Binder.schema.paths));
+    
+    // Creiamo il documento esplicitamente con i campi
+    const binderData = {
       name: body.name,
       color: body.color,
-      userId,
-    });
+      slotCount: slotCount,  // Assicurati che questo campo sia definito correttamente
+      userId
+    };
     
+    console.log("API - Creating binder with data:", binderData);
+    
+    // Creazione del nuovo documento
+    const newBinder = new Binder(binderData);
+    
+    // Log il documento prima del salvataggio
+    console.log("API - New binder document before save:", newBinder);
+    console.log("API - Binder properties:", Object.keys(newBinder));
+    console.log("API - slotCount present in document:", newBinder.slotCount, typeof newBinder.slotCount);
+    
+    // Salvataggio
     await newBinder.save();
+    
+    // Log il documento dopo il salvataggio
+    console.log("API - Saved binder document:", newBinder);
     
     return NextResponse.json({ success: true, data: newBinder }, { status: 201 });
   } catch (error) {
