@@ -273,15 +273,15 @@ const CoverPage = React.forwardRef<HTMLDivElement, CoverProps>((props, ref) => {
     const getCoverBaseImage = (color: string) => {
         const colorToImage: { [key: string]: string } = {
             '#ec6246': 'Charizard',
-            '#1d5ea4': 'Blastoise',
-            '#58a7a2': 'Venusaur',
-            '#f4ae01': 'Pikachu',
-            '#bb77ff': 'Gengar',
-            '#3d6584': 'Umbreon',
-            '#ecdfcf': 'Snorlax',
-            '#f9be00': 'Dragonite',
-            '#d9dcef': 'Lugia',
-            '#e54b33': 'Ho-oh'
+            '#1d5ea4': 'blastoise',
+            '#58a7a2': 'venusaur',
+            '#f4ae01': 'pikachu',
+            '#bb77ff': 'gengar',
+            '#3d6584': 'umbreon',
+            '#ecdfcf': 'snorlax',
+            '#f9be00': 'dragonite',
+            '#d9dcef': 'lugia',
+            '#e54b33': 'ho-oh'
         };
         
         return colorToImage[color] || 'Charizard'; // Default a Charizard se il colore non è trovato
@@ -346,15 +346,15 @@ const BackCoverPage = React.forwardRef<HTMLDivElement, { color: string }>((props
     const getBackImage = (color: string) => {
         const colorToImage: { [key: string]: string } = {
             '#ec6246': 'Charizard_back',
-            '#1d5ea4': 'Blastoise_back',
-            '#58a7a2': 'Venusaur_back',
-            '#f4ae01': 'Pikachu_back',
-            '#bb77ff': 'Gengar_back',
-            '#3d6584': 'Umbreon_back',
-            '#ecdfcf': 'Snorlax_back',
-            '#f9be00': 'Dragonite_back',
-            '#d9dcef': 'Lugia_back',
-            '#e54b33': 'Ho-oh_back'
+            '#1d5ea4': 'blastoise_back',
+            '#58a7a2': 'venusaur_back',
+            '#f4ae01': 'pikachu_back',
+            '#bb77ff': 'gengar_back',
+            '#3d6584': 'umbreon_back',
+            '#ecdfcf': 'snorlax_back',
+            '#f9be00': 'dragonite_back',
+            '#d9dcef': 'lugia_back',
+            '#e54b33': 'ho-oh_back'
         };
         
         return colorToImage[color] || 'Charizard_back.svg'; // Default a Charizard se il colore non è trovato
