@@ -110,7 +110,7 @@ export async function POST(
 
 // GET /api/binders/:id/slots - Get all cards in a binder
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

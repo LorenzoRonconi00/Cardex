@@ -7,7 +7,7 @@ import { authOptions } from '@/lib/auth';
 
 // DELETE - Rimuovi una carta specifica dalla wishlist dell'utente corrente
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

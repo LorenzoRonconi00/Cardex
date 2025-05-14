@@ -11,7 +11,9 @@ interface RouteParams {
   }
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams) {
   try {
     // Verifica autenticazione
     const session = await getServerSession(authOptions);

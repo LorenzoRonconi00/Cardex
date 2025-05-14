@@ -1,11 +1,11 @@
 // app/api/cards/direct/[expansion]/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { Card, Expansion } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(
-  request: Request,
+  _request: NextRequest,
   context: { params: { expansion: string } }
 ) {
   try {

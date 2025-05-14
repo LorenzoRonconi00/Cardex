@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 
 // DELETE /api/binders/:id/slots/:slotNumber - Remove a card from a slot
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string, slotNumber: string } }
 ) {
   try {

@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 
 // GET /api/binders/[id] - Get a specific binder
 export async function GET(
-  req: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -47,7 +47,7 @@ export async function GET(
 
 // DELETE /api/binders/[id] - Delete a specific binder
 export async function DELETE(
-  req: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
