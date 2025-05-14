@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 // GET /api/binders/[id] - Get a specific binder
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const userId = session.user.id;
-    const binderId = params.id;
+    const binderId = context.params.id;
     
     if (!binderId || binderId === 'undefined') {
       return NextResponse.json({ success: false, error: 'Invalid binder ID' }, { status: 400 });
@@ -48,7 +48,7 @@ export async function GET(
 // DELETE /api/binders/[id] - Delete a specific binder
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -58,7 +58,7 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const binderId = params.id;
+    const binderId = context.params.id;
     
     console.log("DELETE API called with ID:", binderId);
     
