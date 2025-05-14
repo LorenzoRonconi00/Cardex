@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Binder } from '@/lib/types';
 
+interface BinderResponse {
+  _id: string;
+  name: string;
+  color: string;
+  userId: string;
+  slotCount?: number;
+  createdAt: string;
+}
+
 // Create Binder Modal Component
 const CreateBinderModal: React.FC<{
   isOpen: boolean;
@@ -396,7 +405,7 @@ const BindersPage: React.FC = () => {
         ) : (
           <div className="flex flex-wrap gap-4">
             {/* Existing Binders (first) */}
-            {binders?.map((binder: any) => (
+            {binders?.map((binder: BinderResponse) => (
               <div key={binder._id} className="w-full md:w-[15%] min-w-[150px]">
                 <BinderCard 
                   binder={{

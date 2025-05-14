@@ -10,6 +10,16 @@ import CardSelectionModal from './CardSelectionModal';
 import { Card } from '@/lib/types';
 import CardPreviewModal from './CardPreviewModal';
 
+interface BinderSlotData {
+    slotNumber: number;
+    cardId: string;
+    card: Card;
+    userId: string;
+    binderId: string;
+    addedAt: string;
+    _id?: string;
+}
+
 // Definizione delle props per le pagine
 type PageProps = {
     pageNumber: number;
@@ -24,6 +34,10 @@ type CoverProps = {
     color: string;
     name: string;
 };
+
+interface FlipEvent {
+    data: number;
+}
 
 // Componente per le pagine standard del raccoglitore
 // BinderPage component with responsive grid layout
@@ -51,7 +65,7 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
     const totalSlots = gridLayout.cols * gridLayout.rows;
 
     // Query for loading slot data
-    const { data: binderSlotsData, isLoading: isLoadingSlots, refetch: refetchSlots } = useQuery({
+    const { data: binderSlotsData, refetch: refetchSlots } = useQuery({
         queryKey: ['binderSlots', binderId],
         queryFn: async () => {
             const response = await fetch(`/api/binders/${binderId}/slots`);
@@ -68,7 +82,7 @@ const BinderPage = React.forwardRef<HTMLDivElement, PageProps>((props, ref) => {
     useEffect(() => {
         if (binderSlotsData && Array.isArray(binderSlotsData)) {
             const newSlotCards: { [slotNumber: number]: Card | null } = {};
-            binderSlotsData.forEach((slot: any) => {
+            binderSlotsData.forEach((slot: BinderSlotData) => {
                 if (slot.slotNumber && slot.card) {
                     newSlotCards[slot.slotNumber] = slot.card;
                 }
@@ -266,7 +280,7 @@ BinderPage.displayName = 'BinderPage';
 
 // Componente per la copertina
 const CoverPage = React.forwardRef<HTMLDivElement, CoverProps>((props, ref) => {
-    const { color, name } = props;
+    const { color } = props;
     const [imageSuffix, setImageSuffix] = useState("_940");
 
     // Funzione per ottenere l'immagine della cover in base al colore
@@ -419,7 +433,7 @@ const BinderView: React.FC = () => {
     const router = useRouter();
 
     // Reference per il libro
-    const bookRef = useRef<any>(null);
+    const bookRef = useRef<{ pageFlip: () => { flipPrev: () => void; flipNext: () => void } } | null>(null);
 
     // State per pagina corrente
     const [currentPage, setCurrentPage] = useState(0);
@@ -454,7 +468,7 @@ const BinderView: React.FC = () => {
     };
 
     // Handler per cambio pagina
-    const handleFlip = (e: any) => {
+    const handleFlip = (e: FlipEvent) => {
         if (e && e.data !== undefined) {
             setCurrentPage(e.data);
         }
@@ -669,7 +683,13 @@ const BinderView: React.FC = () => {
                     <div className="bg-[#2F3136] rounded-lg p-2 sm:p-4 md:p-6 flex justify-center overflow-hidden">
                         <div className="relative mb-20" style={{ width: bookDimensions.width, height: bookDimensions.height }}>
                             {/* Mostra solo la pagina corrente */}
-                            <div className="single-page-container" style={{ width: '100%', height: '100%' }}>
+                            <div className="single-page-container"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    gridTemplateColumns: `repeat(${gridLayout.cols}, minmax(0, 1fr))`,
+                                    gridTemplateRows: `repeat(${gridLayout.rows}, minmax(0, 1fr))`
+                                }}>
                                 {binderPages[currentPage]}
                             </div>
 

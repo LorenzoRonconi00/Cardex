@@ -141,7 +141,7 @@ const PokemonCard: React.FC<PokemonCardProps> = ({
       toast.error(
         <div>
           <p className="font-bold">Errore</p>
-          <p className="text-sm">Si è verificato un errore durante l'aggiunta alla wishlist</p>
+          <p className="text-sm">Si è verificato un errore durante l&apos;aggiunta alla wishlist</p>
         </div>, 
         { 
           id: 'wishlist-add',

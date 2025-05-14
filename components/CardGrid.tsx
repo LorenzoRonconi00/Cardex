@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Card } from '@/lib/types';
 import PokemonCard from './PokemonCard';
 import SaveButton from './SaveButton';
-import AddCardModal from './AddCardModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 
@@ -25,8 +24,8 @@ const CardGrid: React.FC<CardGridProps> = ({
   const queryClient = useQueryClient();
   const [cardsToUpdate, setCardsToUpdate] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  /* const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); */
 
   // Fetch cards for the expansion directly from DB (optimized)
   const { data: cards, isLoading, error } = useQuery<Card[]>({
@@ -121,7 +120,7 @@ const CardGrid: React.FC<CardGridProps> = ({
   });
 
   // Add card to wishlist
-  const { mutate: addToWishlist, isPending: isAddingToWishlist } = useMutation({
+  const { mutate: addToWishlist } = useMutation({
     mutationFn: async ({ card, price }: { card: Card, price: number }) => {
       const response = await fetch('/api/wishlist', {
         method: 'POST',
@@ -143,9 +142,6 @@ const CardGrid: React.FC<CardGridProps> = ({
     onSuccess: () => {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      // Close modal
-      setIsModalOpen(false);
-      setSelectedCard(null);
     },
   });
 
@@ -183,8 +179,8 @@ const CardGrid: React.FC<CardGridProps> = ({
 
   // Handle adding a card to wishlist
   const handleAddToWishlist = (card: Card) => {
-    setSelectedCard(card);
-    setIsModalOpen(true);
+    const price = 0;
+    addToWishlist({ card, price });
   };
 
   // Save changes
@@ -199,7 +195,7 @@ const CardGrid: React.FC<CardGridProps> = ({
   // Check if a card is in the wishlist
   const isCardInWishlist = (cardId: string) => {
     if (!wishlistItems) return false;
-    return wishlistItems.some((item: any) => 
+    return wishlistItems.some((item: { card?: Card, id?: string }) =>
       (item.card && item.card.id === cardId) || item.id === cardId
     );
   };
@@ -324,7 +320,7 @@ const CardGrid: React.FC<CardGridProps> = ({
               />
             </svg>
             <span>
-              Risultati di ricerca per <strong>"{searchTerm}"</strong> in tutte le espansioni: {displayCards.length} carte trovate
+            Risultati di ricerca per <strong>&quot;{searchTerm}&quot;</strong> in tutte le espansioni: {displayCards.length} carte trovate
             </span>
           </div>
         </div>

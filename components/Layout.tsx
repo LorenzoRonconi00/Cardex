@@ -14,7 +14,6 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, onSearch }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

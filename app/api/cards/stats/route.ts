@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectToDatabase, { Card, Expansion } from '@/lib/db';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log("API route chiamata: /api/cards/stats");
     
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     console.log(`Recuperate ${allIllustrationRareCards.length} carte Illustration Rare totali dal database`);
     
     // Group cards by expansion
-    const cardsByExpansion: Record<string, any[]> = {};
+    const cardsByExpansion: Record<string, typeof allIllustrationRareCards[0][]> = {};
     allIllustrationRareCards.forEach(card => {
       if (!cardsByExpansion[card.expansion]) {
         cardsByExpansion[card.expansion] = [];

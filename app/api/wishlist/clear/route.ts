@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // DELETE - Rimuovi tutte le carte dalla wishlist dell'utente corrente
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
     // Verifica che l'utente sia autenticato
     const session = await getServerSession(authOptions);
