@@ -4,7 +4,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import TopHeader from './TopHeader';
 import { useSession } from 'next-auth/react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface LayoutProps {
   children: ReactNode;
