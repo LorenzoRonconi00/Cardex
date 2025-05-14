@@ -228,7 +228,7 @@ const BinderCard: React.FC<{
         
         {/* Slot Count Badge */}
         <div className="mt-1 px-2 py-0.5 bg-gray-700 rounded-full text-gray-300 text-xs">
-          {binder.slotCount || 180} slot
+          {binder.slotCount || 180} tasche
         </div>
         
         {/* Delete button (visible on hover) */}
