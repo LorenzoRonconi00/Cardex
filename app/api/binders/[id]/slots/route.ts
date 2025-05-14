@@ -172,10 +172,10 @@ export async function GET(
     }).lean();
     
     // Create a map of card IDs to card data for easy lookup
-    const cardMap = cards.reduce((acc, card) => {
+    const cardMap = cards.reduce<Record<string, typeof cards[0]>>((acc, card) => {
       acc[card.id] = card;
       return acc;
-    }, {} as Record<string, any>);
+    }, {});
     
     // Combine slot data with card data
     const slotsWithCards = binderSlots.map(slot => ({
