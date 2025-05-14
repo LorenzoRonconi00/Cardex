@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase, { Card, Expansion } from '@/lib/db';
 import { fetchCardsByExpansion } from '@/lib/pokemon-api';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // GET /api/cards/[expansion]
 export async function GET(

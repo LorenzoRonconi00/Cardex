@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { WishlistItem } from '@/lib/db';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // DELETE - Rimuovi una carta specifica dalla wishlist dell'utente corrente
 export async function DELETE(

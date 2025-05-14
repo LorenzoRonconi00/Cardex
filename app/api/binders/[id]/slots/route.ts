@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { BinderSlot, Card, Binder } from '@/lib/db';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
 // POST /api/binders/:id/slots - Add/update a card in a binder slot

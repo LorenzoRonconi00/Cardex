@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase, { WishlistItem } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // DELETE - Rimuovi tutte le carte dalla wishlist dell'utente corrente
 export async function DELETE() {

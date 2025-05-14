@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { Card, WishlistItem } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // GET - Ricerca globale di carte in tutte le espansioni
 export async function GET(request: NextRequest) {

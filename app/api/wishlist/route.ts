@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { WishlistItem } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 interface MongoDBError extends Error {
   code?: number;

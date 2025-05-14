@@ -1,7 +1,7 @@
 // app/api/users/[userId]/cards/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import clientPromise from '@/lib/mongodb';
 import { Card } from '@/lib/db';
 
