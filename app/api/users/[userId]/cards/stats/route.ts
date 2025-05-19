@@ -5,16 +5,14 @@ import { authOptions } from '@/lib/auth';
 import clientPromise from '@/lib/mongodb';
 import { Card } from '@/lib/db';
 
-interface RouteParams {
-  params: {
-    userId: string;
-  }
-}
-
 export async function GET(
-  _request: NextRequest,
-  { params }: RouteParams) {
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
   try {
+    // Attendi i parametri dinamici
+    const { userId } = await params;
+    
     // Verifica autenticazione
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -23,8 +21,6 @@ export async function GET(
         { status: 401 }
       );
     }
-    
-    const userId = params.userId;
     
     // Verifica che l'utente stia richiedendo le proprie statistiche
     if (session.user.id !== userId) {

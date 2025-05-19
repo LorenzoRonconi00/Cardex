@@ -7,10 +7,13 @@ import { authOptions } from '@/lib/auth';
 
 // DELETE - Rimuovi una carta specifica dalla wishlist dell'utente corrente
 export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Attendi i parametri dinamici
+    const { id } = await params;
+    
     // Verifica che l'utente sia autenticato
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -22,8 +25,6 @@ export async function DELETE(
 
     // Ottieni l'ID dell'utente
     const userId = session.user.id;
-    
-    const id = params.id;
     
     console.log("API: Attempting to delete wishlist item with ID:", id, "for user:", userId);
     

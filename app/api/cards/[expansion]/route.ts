@@ -1,3 +1,4 @@
+// app/api/cards/[expansion]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { Card, Expansion } from '@/lib/db';
 import { fetchCardsByExpansion } from '@/lib/pokemon-api';
@@ -6,10 +7,13 @@ import { authOptions } from '@/lib/auth';
 
 // GET /api/cards/[expansion]
 export async function GET(
-    _request: NextRequest,
-  context: { params: { expansion: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ expansion: string }> }
 ) {
   try {
+    // Accedi al parametro expansion in modo asincrono
+    const { expansion: expansionSlug } = await params;
+    
     // Ottieni la sessione dell'utente
     const session = await getServerSession(authOptions);
     
@@ -17,9 +21,6 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Autenticazione richiesta' }, { status: 401 });
     }
-    
-    // Accedi al parametro expansion in modo sicuro
-    const expansionSlug = context.params.expansion;
     
     if (!expansionSlug) {
       return NextResponse.json({ error: 'Expansion slug is required' }, { status: 400 });

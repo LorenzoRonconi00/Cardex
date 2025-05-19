@@ -5,7 +5,7 @@ import connectToDatabase, { Binder } from '@/lib/db';
 import { authOptions } from '@/lib/auth';
 
 // GET /api/binders - Get all binders for the logged in user
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -27,7 +27,7 @@ export async function GET() {
 }
 
 // POST /api/binders - Create a new binder
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    const body = await req.json();
+    const body = await request.json();
     
     console.log("API - Received request body:", body);
     

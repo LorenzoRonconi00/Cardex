@@ -7,10 +7,10 @@ import { ObjectId } from 'mongodb';
 // POST /api/binders/:id/slots - Add/update a card in a binder slot
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const binderId = params.id;
+    const { id: binderId } = await params;
     
     // Verify user authentication
     const session = await getServerSession(authOptions);
@@ -111,10 +111,10 @@ export async function POST(
 // GET /api/binders/:id/slots - Get all cards in a binder
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const binderId = params.id;
+    const { id: binderId } = await params;
     
     // Verify user authentication
     const session = await getServerSession(authOptions);
