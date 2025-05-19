@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
           onClick={() => navigateTo('/wishlist', 1)}
         >
           <Image
-            src="/images/wishlist.svg"
+            src="/images/wishList.svg"
             alt="Wishlist"
             width={22}
             height={22}
@@ -158,20 +158,6 @@ const Navbar: React.FC = () => {
             style={{ width: 'auto', height: 'auto', maxWidth: '24px', maxHeight: '24px' }}
           />
         </div>
-      </div>
-      
-      {/* Bottone Logout - TODO: Al momento non esegue nulla */}
-      <div 
-        className="w-12 h-12 bg-[#36393E]/70 hover:bg-[#36393E]/90 rounded-xl flex items-center justify-center cursor-pointer shadow-lg mt-auto mb-6 transition-all"
-        onClick={() => {}}
-      >
-        <Image
-          src="/images/logout.svg"
-          alt="Logout"
-          width={28}
-          height={28}
-          style={{ width: 'auto', height: 'auto', maxWidth: '28px', maxHeight: '28px' }}
-        />
       </div>
     </nav>
   );
