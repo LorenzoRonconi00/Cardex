@@ -4,6 +4,20 @@ import connectToDatabase, { Card, WishlistItem } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
+// Definiamo un'interfaccia per rappresentare una carta dal database Mongoose
+interface DatabaseCard {
+  _id?: any;
+  id: string;
+  name: string;
+  imageUrl: string;
+  expansion: string;
+  isCollected: boolean;
+  dateCollected?: Date | null;
+  userId?: string;
+  __v?: number;
+  [key: string]: any;
+}
+
 // GET - Ricerca globale di carte in tutte le espansioni
 export async function GET(request: NextRequest) {
   try {
@@ -89,10 +103,10 @@ export async function GET(request: NextRequest) {
     const searchResults = await Card.find(searchFilter)
       .sort({ _id: -1 }) // Ordine inverso di inserimento (approssimazione per "più recenti")
       .limit(limit)
-      .lean();
+      .lean() as DatabaseCard[];
 
     // Rimuovi i duplicati basati sull'ID della carta
-    const uniqueResults = [];
+    const uniqueResults: DatabaseCard[] = [];
     const seenIds = new Set();
 
     for (const card of searchResults) {
@@ -108,7 +122,7 @@ export async function GET(request: NextRequest) {
     const resultsByExpansion: Record<string, number> = {};
 
     uniqueResults.forEach(card => {
-      const expansionId = card.expansion as string;
+      const expansionId = card.expansion;
       resultsByExpansion[expansionId] = (resultsByExpansion[expansionId] || 0) + 1;
     });
 

@@ -1,8 +1,23 @@
+// Approccio 2: Creare un tipo distinto senza estendere Binder
+// app/api/binders/[id]/slots/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase, { BinderSlot, Card, Binder } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+
+// Creiamo un tipo distinto invece di estendere Binder
+interface DatabaseBinder {
+  _id?: string | ObjectId;
+  id?: string;
+  name: string;
+  color: string;
+  slotCount: number;
+  userId: string | ObjectId;
+  createdAt: Date;
+  __v?: number;
+  [key: string]: any;
+}
 
 // POST /api/binders/:id/slots - Add/update a card in a binder slot
 export async function POST(
@@ -39,14 +54,16 @@ export async function POST(
     await connectToDatabase();
     
     // Try finding the binder by different ID fields
-    let binder = null;
+    let binder: DatabaseBinder | null = null;
     
     if (ObjectId.isValid(binderId)) {
-      binder = await Binder.findOne({ _id: new ObjectId(binderId) });
+      const result = await Binder.findOne({ _id: new ObjectId(binderId) });
+      binder = result ? result.toObject() as DatabaseBinder : null;
     }
     
     if (!binder) {
-      binder = await Binder.findOne({ id: binderId });
+      const result = await Binder.findOne({ id: binderId });
+      binder = result ? result.toObject() as DatabaseBinder : null;
     }
     
     if (!binder) {
@@ -110,7 +127,7 @@ export async function POST(
 
 // GET /api/binders/:id/slots - Get all cards in a binder
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -133,14 +150,16 @@ export async function GET(
     await connectToDatabase();
     
     // Try finding the binder by different ID fields
-    let binder = null;
+    let binder: DatabaseBinder | null = null;
     
     if (ObjectId.isValid(binderId)) {
-      binder = await Binder.findOne({ _id: new ObjectId(binderId) });
+      const result = await Binder.findOne({ _id: new ObjectId(binderId) });
+      binder = result ? result.toObject() as DatabaseBinder : null;
     }
     
     if (!binder) {
-      binder = await Binder.findOne({ id: binderId });
+      const result = await Binder.findOne({ id: binderId });
+      binder = result ? result.toObject() as DatabaseBinder : null;
     }
     
     if (!binder) {
@@ -172,7 +191,7 @@ export async function GET(
     }).lean();
     
     // Create a map of card IDs to card data for easy lookup
-    const cardMap = cards.reduce<Record<string, typeof cards[0]>>((acc, card) => {
+    const cardMap = cards.reduce<Record<string, any>>((acc, card) => {
       acc[card.id] = card;
       return acc;
     }, {});
