@@ -19,7 +19,9 @@ export default function SignIn() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const error = searchParams.get('error');
-  
+
+  const [isLoading, setIsLoading] = useState(false);
+
   // State to control when to start the animation
   const [isAnimating, setIsAnimating] = useState(false);
   // State to track window dimensions for responsive calculations
@@ -55,7 +57,8 @@ export default function SignIn() {
 
   // Function to handle Google sign in with account selection prompt
   const handleGoogleSignIn = () => {
-    signIn('google', { 
+    setIsLoading(true);
+    signIn('google', {
       callbackUrl: callbackUrl,
       redirect: true,
       prompt: 'select_account' // Force Google to show account selection screen
@@ -74,7 +77,7 @@ export default function SignIn() {
       'EmailSignin': "Errore durante l'invio dell'email. Riprova.",
       'CredentialsSignin': "Le credenziali di accesso non sono valide."
     };
-    
+
     return errorMessages[errorCode] || "Si è verificato un errore durante l'accesso. Riprova.";
   };
 
@@ -83,7 +86,7 @@ export default function SignIn() {
     // Base dimensions
     let width = 240;
     let height = 336;
-    
+
     // Scale up for larger screens
     if (windowSize.width > 1600) {
       width = 300;
@@ -92,7 +95,7 @@ export default function SignIn() {
       width = 270;
       height = 378;
     }
-    
+
     return { width, height };
   };
 
@@ -101,31 +104,31 @@ export default function SignIn() {
 
   // Animation variants for text elements
   const textAnimation = {
-    hidden: { 
-      opacity: 0, 
-      y: -50 
+    hidden: {
+      opacity: 0,
+      y: -50
     },
-    visible: (custom: number) => ({ 
-      opacity: 1, 
+    visible: (custom: number) => ({
+      opacity: 1,
       y: 0,
-      transition: { 
+      transition: {
         delay: custom * 0.2,
         duration: 0.7,
         ease: [0.25, 0.1, 0.25, 1.0], // Custom cubic-bezier for a more natural motion
       }
     })
   };
-  
+
   // Button animation variant
   const buttonAnimation = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       scale: 0.95
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       scale: 1,
-      transition: { 
+      transition: {
         delay: 0.8,
         duration: 0.4,
         ease: "easeOut"
@@ -140,51 +143,60 @@ export default function SignIn() {
         <div className="w-1/3 flex justify-start">
           {/* Empty div for flex spacing */}
         </div>
-        
-        <motion.div 
+
+        <motion.div
           className="w-1/3 flex justify-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <div className="w-20 h-20 pt-2">
-            <Image 
-              src="/images/logoCardex.svg" 
-              alt="Cardex Logo" 
-              width={48} 
-              height={48} 
+            <Image
+              src="/images/logoCardex.svg"
+              alt="Cardex Logo"
+              width={48}
+              height={48}
               priority
               className="w-full h-full"
             />
           </div>
         </motion.div>
-        
+
         <div className="w-1/3 flex justify-end">
-          <motion.button 
+          <motion.button
             onClick={handleGoogleSignIn}
             className="hidden md:flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 rounded-full transition-colors"
             variants={buttonAnimation}
             initial="hidden"
             animate="visible"
+            disabled={isLoading}
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-              <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-                <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-                <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-                <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
-              </g>
-            </svg>
-            Accedi
+            {isLoading ? (
+              <div className='flex items-center justify-center inset-0'>
+                <div className='animate-spin rounded-full h-5 w-5 border-t-2 border-gray-800'></div>
+              </div>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" className="mr-1">
+                  <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+                    <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z" />
+                    <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z" />
+                    <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z" />
+                    <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
+                  </g>
+                </svg>
+                Accedi
+              </>
+            )}
           </motion.button>
         </div>
       </header>
 
       {/* Main content - positioned slightly above vertical center */}
-      <main className="flex flex-col items-center justify-center px-4 pt-24 pb-32 min-h-screen z-20">
+      <main className="flex flex-col items-center justify-center px-4 md:pt-24 pb-32 min-h-screen z-20">
         <div className="max-w-3xl w-full flex flex-col items-center">
           {/* Titles - using clamp for more fluid typography with animations */}
-          <motion.h1 
+          <motion.h1
             className="text-[clamp(1.5rem,3.5vw,6rem)] font-bold text-white text-center whitespace-nowrap"
             custom={0}
             variants={textAnimation}
@@ -193,8 +205,8 @@ export default function SignIn() {
           >
             Colleziona. Ricorda.
           </motion.h1>
-          
-          <motion.h2 
+
+          <motion.h2
             className="text-[clamp(1.75rem,4vw,6.25rem)] font-bold text-white text-center mb-4 whitespace-nowrap"
             custom={1}
             variants={textAnimation}
@@ -203,9 +215,9 @@ export default function SignIn() {
           >
             Registra la tua collezione!
           </motion.h2>
-          
+
           {/* Subtitle - with responsive width and font size */}
-          <motion.p 
+          <motion.p
             className="text-[clamp(1rem,2vw,1.125rem)] text-gray-300 text-center w-[clamp(280px,80vw,640px)] mb-8 sm:mb-12 md:mb-16 px-4"
             custom={2}
             variants={textAnimation}
@@ -218,7 +230,7 @@ export default function SignIn() {
 
           {/* Error messages if present */}
           {error && (
-            <motion.div 
+            <motion.div
               className="mb-8 p-4 bg-red-500 text-white rounded-md w-full max-w-md"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -227,9 +239,9 @@ export default function SignIn() {
               {getErrorMessage(error)}
             </motion.div>
           )}
-          
+
           {/* Mobile login button */}
-          <motion.div 
+          <motion.div
             className="md:hidden mt-4"
             variants={buttonAnimation}
             initial="hidden"
@@ -241,10 +253,10 @@ export default function SignIn() {
             >
               <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                 <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                  <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-                  <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-                  <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-                  <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                  <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z" />
+                  <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z" />
+                  <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z" />
+                  <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
                 </g>
               </svg>
               Accedi con Google
@@ -255,47 +267,47 @@ export default function SignIn() {
 
       {/* Card fan container - positioned at the bottom of the screen */}
       <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden z-10">
-        <div className="relative mx-auto" style={{ 
-          height: windowSize.height > 900 ? '50vh' : '40vh', 
-          minHeight: '300px', 
-          maxHeight: '600px' 
+        <div className="relative mx-auto" style={{
+          height: windowSize.height > 900 ? '50vh' : '40vh',
+          minHeight: '300px',
+          maxHeight: '600px'
         }}>
           {cards.map((card, index) => {
             // Calculate position based on screen width
             const totalCards = cards.length;
             const centerIndex = Math.floor(totalCards / 2);
-            
+
             // Calculate horizontal spread based on viewport width
             const spreadFactorBase = windowSize.width * 0.08;
             const spreadMultiplier = Math.min(spreadFactorBase, windowSize.width > 1400 ? 130 : 100);
-            
+
             // Calculate positioning values
             const angleOffset = (index - centerIndex) * 10; // Rotation angle
             const xOffset = (index - centerIndex) * spreadMultiplier; // Horizontal position
             const yOffset = Math.abs(index - centerIndex) * (windowSize.width > 1200 ? 20 : 15); // Vertical offset
             const zIndex = 5 - Math.abs(index - centerIndex); // Z-index to layer cards properly
-            
+
             // Card base positional multiplier (affects card size relative to screen)
-            const cardBaseSize = windowSize.width > 1600 ? 0.95 : 
-                               windowSize.width > 1200 ? 0.9 : 0.85;
-                               
+            const cardBaseSize = windowSize.width > 1600 ? 0.95 :
+              windowSize.width > 1200 ? 0.9 : 0.85;
+
             // Card scale relative to center position
-            const cardScale = index === centerIndex ? 
-                              cardBaseSize : 
-                              cardBaseSize - (Math.abs(index - centerIndex) * 0.05);
-            
+            const cardScale = index === centerIndex ?
+              cardBaseSize :
+              cardBaseSize - (Math.abs(index - centerIndex) * 0.05);
+
             return (
               <motion.div
                 key={card.id}
                 className="absolute bottom-0 left-1/2 origin-bottom"
-                initial={{ 
+                initial={{
                   x: -cardDimensions.width / 2,
                   y: 150,
                   opacity: 0,
                   scale: 0.6,
                   zIndex: zIndex
                 }}
-                animate={isAnimating ? { 
+                animate={isAnimating ? {
                   x: xOffset - (cardDimensions.width / 2), // Center point adjustment
                   y: yOffset,
                   opacity: 1,
@@ -314,7 +326,7 @@ export default function SignIn() {
                 }}
               >
                 {/* Card container with rotation */}
-                <motion.div 
+                <motion.div
                   className="w-full h-full rounded-xl overflow-hidden shadow-xl"
                   initial={{ rotate: 0 }}
                   animate={isAnimating ? { rotate: angleOffset } : {}}

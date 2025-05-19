@@ -971,6 +971,7 @@ const BinderView: React.FC = () => {
                             style={{ margin: '0 auto' }}
                             ref={bookRef}
                             onFlip={handleFlip}
+                            className=''
                         >
                             {binderPages}
                         </HTMLFlipBook>
