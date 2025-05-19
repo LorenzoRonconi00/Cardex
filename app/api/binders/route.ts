@@ -5,7 +5,7 @@ import connectToDatabase, { Binder } from '@/lib/db';
 import { authOptions } from '@/lib/auth';
 
 // GET /api/binders - Get all binders for the logged in user
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
